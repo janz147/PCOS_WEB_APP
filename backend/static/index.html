@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PCOS Model Demo</title>
+  <style>
+    body { font-family: Inter, system-ui, Arial; margin: 18px; max-width: 980px; }
+    textarea { width:100%; height:260px; font-family: monospace; font-size:13px; padding:10px; box-sizing:border-box; }
+    pre { background:#f6f8fa; padding:12px; border-radius:6px; overflow:auto; }
+    .row { display:flex; gap:12px; margin-top:8px; }
+    button { padding:10px 14px; border-radius:6px; cursor:pointer; }
+    .muted { color:#666; font-size:13px; }
+  </style>
+</head>
+<body>
+  <h2>PCOS Tabular Model — Demo</h2>
+  <p class="muted">Paste or edit JSON for a single patient, then click <b>Send</b>. Response appears below.</p>
+
+  <label><strong>Input JSON (single object)</strong></label>
+  <textarea id="inputJson">{ 
+  "Age (yrs)": 28,
+  "Weight (Kg)": 72,
+  "Height(Cm)": 158,
+  "BMI": 28.8,
+  "Cycle(R/I)": 1,
+  "Cycle length(days)": 45,
+  "Marraige Status (Yrs)": 3,
+  "Pregnant(Y/N)": "N",
+  "No. of aborptions": 0,
+  "I   beta-HCG(mIU/mL)": 1.2,
+  "FSH(mIU/mL)": 5.1,
+  "LH(mIU/mL)": 12.4,
+  "FSH/LH": 0.41,
+  "Hip(inch)": 40,
+  "Waist(inch)": 36,
+  "Waist:Hip Ratio": 0.9,
+  "TSH (mIU/L)": 3.2,
+  "PRL(ng/mL)": 18,
+  "Vit D3 (ng/mL)": 12,
+  "PRG(ng/mL)": 0.4,
+  "RBS(mg/dl)": 110,
+  "Weight gain(Y/N)": "Y",
+  "hair growth(Y/N)": "Y",
+  "Skin darkening (Y/N)": "Y",
+  "Hair loss(Y/N)": "Y",
+  "Fast food (Y/N)": "Y",
+  "Reg.Exercise(Y/N)": "N"
+}</textarea>
+
+  <div class="row">
+    <button id="sendBtn">Send to /predict-pcos</button>
+    <button id="exampleBtn">Load Zeros Example</button>
+    <div style="flex:1"></div>
+    <div class="muted">Backend: <code>/predict-pcos</code></div>
+  </div>
+
+  <h3>Response</h3>
+  <pre id="out">No response yet.</pre>
+
+  <script>
+    const sendBtn = document.getElementById("sendBtn");
+    const out = document.getElementById("out");
+    const exampleBtn = document.getElementById("exampleBtn");
+    const area = document.getElementById("inputJson");
+
+    exampleBtn.addEventListener("click", () => {
+      const zeros = {};
+      // FEATURE_NAMES will be fetched from backend if needed; quick zeros example:
+      const fields = ["Age (yrs)","Weight (Kg)","Height(Cm)","BMI","Cycle(R/I)","Cycle length(days)","Marraige Status (Yrs)","Pregnant(Y/N)","No. of aborptions","I   beta-HCG(mIU/mL)","FSH(mIU/mL)","LH(mIU/mL)","FSH/LH","Hip(inch)","Waist(inch)","Waist:Hip Ratio","TSH (mIU/L)","PRL(ng/mL)","Vit D3 (ng/mL)","PRG(ng/mL)","RBS(mg/dl)","Weight gain(Y/N)","hair growth(Y/N)","Skin darkening (Y/N)","Hair loss(Y/N)","Fast food (Y/N)","Reg.Exercise(Y/N)"];
+      fields.forEach(f => zeros[f] = 0);
+      area.value = JSON.stringify(zeros, null, 2);
+    });
+
+    sendBtn.addEventListener("click", async () => {
+      out.textContent = "Sending…";
+      let payload;
+      try {
+        payload = JSON.parse(area.value);
+      } catch (e) {
+        out.textContent = "Invalid JSON: " + e.message;
+        return;
+      }
+
+      try {
+        const res = await fetch("/predict-pcos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        out.textContent = JSON.stringify(j, null, 2);
+      } catch (err) {
+        out.textContent = "Request failed: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
