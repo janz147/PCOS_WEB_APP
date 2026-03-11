@@ -96,7 +96,7 @@ const AboutPage = () => {
       />
       <BackButton isSidebarOpen={isSidebarOpen} />
 
-      <main className="min-h-screen bg-background smooth-scroll ml-20">
+      <main className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-primary/5 page-transition ml-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-20">
           {/* Hero Header */}
           <header className="text-center mb-16 md:mb-20">

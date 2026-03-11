@@ -149,18 +149,20 @@ const PCOSCareDashboard = () => {
         onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
       />
 
-      {/* About Us Button moved to upper right */}
-      <Button
-        variant="outline"
-        iconName="Info"
-        iconPosition="left"
-        onClick={() => navigate('/about')}
-        className="fixed top-4 right-4 z-50"
-      >
-        About Us
-      </Button>
+      {/* About Us Button - scrolls with page */}
+      <div className="relative">
+        <Button
+          variant="outline"
+          iconName="Info"
+          iconPosition="left"
+          onClick={() => navigate('/about')}
+          className="absolute top-4 right-4 z-50"
+        >
+          About Us
+        </Button>
+      </div>
 
-      <main className="min-h-screen bg-background smooth-scroll ml-20">
+      <main className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-primary/5 page-transition">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-20">
           <WelcomeHeader />
 

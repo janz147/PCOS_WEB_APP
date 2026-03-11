@@ -21,12 +21,12 @@ const Footer = ({ className = '' }) => {
   ];
 
   return (
-    <footer className={cn('bg-card border-t border-border mt-20', className)}>
+    <footer className={cn('bg-gradient-to-r from-coral-500 to-pink-500 border-t border-primary/20 mt-20', className)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Navigation Links */}
           <div>
-            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+            <h3 className="font-heading font-semibold text-lg text-gray-800 mb-4">
               Quick Links
             </h3>
             <ul className="space-y-2">
@@ -34,7 +34,7 @@ const Footer = ({ className = '' }) => {
                 <li key={index}>
                   <button
                     onClick={() => navigate(link?.path)}
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="text-gray-700 hover:text-gray-900 transition-colors"
                   >
                     {link?.name}
                   </button>
@@ -45,10 +45,10 @@ const Footer = ({ className = '' }) => {
 
           {/* Contact Information */}
           <div>
-            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+            <h3 className="font-heading font-semibold text-lg text-gray-800 mb-4">
               Contact Us
             </h3>
-            <div className="space-y-3 text-muted-foreground">
+            <div className="space-y-3 text-gray-700">
               <div className="flex items-start gap-2">
                 <Icon name="MapPin" size={18} className="mt-1 flex-shrink-0" />
                 <p className="text-sm">
@@ -70,7 +70,7 @@ const Footer = ({ className = '' }) => {
 
           {/* Social Media Links */}
           <div>
-            <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+            <h3 className="font-heading font-semibold text-lg text-gray-800 mb-4">
               Follow Us
             </h3>
             <div className="flex gap-4">
@@ -80,7 +80,7 @@ const Footer = ({ className = '' }) => {
                   href={social?.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground text-muted-foreground flex items-center justify-center transition-all hover:shadow-coral-md"
+                  className="w-10 h-10 rounded-lg bg-white/20 hover:bg-white hover:text-coral-500 text-gray-800 flex items-center justify-center transition-all hover:shadow-lg"
                   aria-label={social?.name}
                 >
                   <Icon name={social?.icon} size={20} />
@@ -91,8 +91,8 @@ const Footer = ({ className = '' }) => {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-8 border-t border-border text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-8 pt-8 border-t border-white/20 text-center">
+          <p className="text-sm text-gray-700">
             © {new Date()?.getFullYear()} PCOS Care. All rights reserved.
           </p>
         </div>
