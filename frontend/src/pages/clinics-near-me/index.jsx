@@ -20,51 +20,90 @@ const ClinicsNearMe = () => {
   const [addressInput, setAddressInput] = useState('');
   const [userLocation, setUserLocation] = useState(null);
 
-  const API_BASE_URL = 'http://localhost:3001';
+  // NOTE: For quick testing we call Overpass directly from the frontend.
+  // This is temporary — for production move this to a backend proxy to avoid CORS/rate-limit/UA issues.
+  const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
-  // Fetch clinics from backend
-  const fetchClinics = async (lat, lng, radius = 2000) => {
+  // Fetch clinics using a simple Overpass query (temporary direct frontend test)
+  const fetchClinics = async (lat, lng, radius = 10000) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/nearby-clinics?lat=${lat}&lng=${lng}&radius=${radius}`
-      );
-      const result = await response?.json();
+      // Simple Overpass QL: only nodes with amenity=clinic within radius
+      const ql = `[out:json][timeout:25];(node(around:${radius},${lat},${lng})[amenity=clinic];node(around:${radius},${lat},${lng})[amenity=doctors];node(around:${radius},${lat},${lng})[healthcare=clinic];);out tags center;`;
 
-      if (result?.ok) {
-        setClinics(result?.data || []);
-      } else {
-        setError(result?.error || 'Failed to fetch clinics');
+      const body = new URLSearchParams();
+      body.append('data', ql);
+
+      const resp = await fetch(OVERPASS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+          // Note: browsers prevent setting a custom User-Agent. This call is for quick testing only.
+        },
+        body: body.toString()
+      });
+
+      if (!resp.ok) {
+        throw new Error(`Overpass request failed: ${resp.status} ${resp.statusText}`);
       }
+
+      const json = await resp.json();
+      const elements = json?.elements || [];
+
+      const mapped = elements.map((el) => {
+        const tags = el.tags || {};
+        const latVal = el.lat ?? el.center?.lat ?? null;
+        const lonVal = el.lon ?? el.center?.lon ?? null;
+        const addressParts = [tags['addr:housenumber'], tags['addr:street'], tags['addr:city']].filter(Boolean);
+        const address = addressParts.length ? addressParts.join(', ') : (tags['addr:full'] || tags['address'] || null);
+
+        return {
+          place_id: `${el.type}/${el.id}`,
+          name: tags.name || tags.operator || '(no name)',
+          address,
+          phone: tags.phone || tags['contact:phone'] || null,
+          website: tags.website || tags['contact:website'] || null,
+          opening_hours: tags.opening_hours || null,
+          tags,
+          location: latVal && lonVal ? { lat: latVal, lng: lonVal } : null
+        };
+      });
+
+      setClinics(mapped);
     } catch (err) {
       console.error('Error fetching clinics:', err);
-      setError('Unable to connect to the server. Please ensure the backend is running.');
+      setError('Failed to fetch clinic data. Try a smaller radius or try again.');
+      setClinics([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Geocode address using backend
+  // Geocode address using Nominatim (direct quick test). For production use backend proxy.
   const geocodeAddress = async (address) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/geocode?q=${encodeURIComponent(address)}`
-      );
-      const result = await response?.json();
-
-      if (result?.ok && result?.data) {
-        setUserLocation({ lat: result?.data?.lat, lng: result?.data?.lng });
-        await fetchClinics(result?.data?.lat, result?.data?.lng);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+      const resp = await fetch(url, {
+        headers: {
+          // Nominatim requires identifying User-Agent in heavy usage; browsers will send their UA automatically.
+          'Accept-Language': 'en'
+        }
+      });
+      const data = await resp.json();
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lon) });
+        await fetchClinics(parseFloat(lat), parseFloat(lon));
       } else {
-        setError(result?.error || 'Address not found. Please try a different search.');
-        setLoading(false);
+        setError('Address not found. Please try a different search.');
       }
     } catch (err) {
       console.error('Error geocoding address:', err);
       setError('Unable to geocode address. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -72,9 +111,9 @@ const ClinicsNearMe = () => {
   // Try to get user's current location on mount
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation?.getCurrentPosition(
+      navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position?.coords;x
+          const { latitude, longitude } = position?.coords;
           setUserLocation({ lat: latitude, lng: longitude });
           fetchClinics(latitude, longitude);
         },
@@ -104,7 +143,7 @@ const ClinicsNearMe = () => {
     setLocationDenied(false);
     setError(null);
     if (navigator.geolocation) {
-      navigator.geolocation?.getCurrentPosition(
+      navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position?.coords;
           setUserLocation({ lat: latitude, lng: longitude });
@@ -123,8 +162,8 @@ const ClinicsNearMe = () => {
   const filteredClinics = searchQuery
     ? clinics?.filter((clinic) =>
         clinic?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
-        clinic?.address?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
-        clinic?.tags?.healthcare?.toLowerCase()?.includes(searchQuery?.toLowerCase())
+        (clinic?.address || '').toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
+        (clinic?.tags?.healthcare || '').toLowerCase()?.includes(searchQuery?.toLowerCase())
       )
     : clinics;
 
