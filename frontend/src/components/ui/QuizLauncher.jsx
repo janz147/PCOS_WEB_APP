@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import QuizTypeModal from './QuizTypeModal';
+import ConsentModal from './ConsentModal';
 
 const QuizLauncher = ({ 
   onStart,
   className = ''
 }) => {
   const [isStarting, setIsStarting] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
@@ -16,6 +18,11 @@ const QuizLauncher = ({
     if (onStart) {
       await onStart();
     }
+    setShowConsent(true);
+  };
+
+  const handleConsentAccept = () => {
+    setShowConsent(false);
     setShowModal(true);
   };
 
@@ -73,6 +80,12 @@ const QuizLauncher = ({
           </div>
         </div>
       </div>
+
+      <ConsentModal
+        isOpen={showConsent}
+        onAccept={handleConsentAccept}
+        onClose={() => setShowConsent(false)}
+      />
 
       <QuizTypeModal 
         isOpen={showModal}

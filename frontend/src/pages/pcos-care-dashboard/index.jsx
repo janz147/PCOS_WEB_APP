@@ -40,12 +40,12 @@ const PCOSCareDashboard = () => {
   },
   {
     id: 2,
-    icon: 'Heart',
-    title: 'Confidence Building',
-    description: 'Join our supportive community and access tools designed to boost your confidence and well-being',
-    buttonText: 'Build Confidence',
-    route: '/confidence',
-    isHighlighted: false
+    icon: 'Lightbulb',
+    title: 'Facts & Myths on PCOS',
+    description: 'Separate fact from fiction — explore evidence-based facts and debunk common myths about PCOS',
+    buttonText: 'Explore Facts & Myths',
+    route: '/facts-and-myths',
+    isHighlighted: true
   },
   {
     id: 3,
@@ -54,7 +54,7 @@ const PCOSCareDashboard = () => {
     description: 'Locate experienced PCOS specialists and healthcare providers in your area',
     buttonText: 'Find Clinics',
     route: '/clinics-near-me',
-    isHighlighted: true
+    isHighlighted: false
   },
   {
     id: 4,
