@@ -26,7 +26,7 @@ export const predictTabular = async (payload) => {
       if (response?.status >= 400 && response?.status < 500) {
         return { 
           ok: false, 
-          error: data?.message || `Client error: ${response?.status}` 
+          error: data?.detail || data?.message || data?.error || `Client error: ${response?.status}` 
         };
       }
 
@@ -91,7 +91,7 @@ export const predictImage = async (file) => {
       if (response?.status >= 400 && response?.status < 500) {
         return { 
           ok: false, 
-          error: data?.message || `Client error: ${response?.status}` 
+          error: data?.detail || data?.message || data?.error || `Client error: ${response?.status}`
         };
       }
 
