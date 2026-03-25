@@ -3,8 +3,9 @@ from PIL import Image, ImageOps
 import numpy as np
 import shutil
 
-SRC = Path("data")                 # data/<class>/<image>
-DST = Path("data_sanitized")       # mirror will be written here
+BASE_DIR = Path(__file__).resolve().parent
+SRC = BASE_DIR / "data"
+DST = BASE_DIR / "data_sanitized"       # mirror will be written here
 DST.mkdir(parents=True, exist_ok=True)
 
 IMG_SIZE = 384                     # common working size (we’ll still resize to 224 at train time)

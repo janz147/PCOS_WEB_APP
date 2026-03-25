@@ -1,11 +1,3 @@
 file,true,pred,prob,correct
-Image_SetA716.jpg,0,0,1.1920929e-06,True
-image11919.jpg,1,1,1.0,True
-image10409.jpg,1,1,1.0,True
-Image_Rotate_Rotate_Right_171.jpg,1,1,1.0,True
-Image_Rotate_077.jpg,1,1,1.0,True
-Image_resize_122.jpg,1,1,1.0,True
-image12848.jpg,1,1,0.97777796,True
-image11737.jpg,1,1,1.0,True
-Image_SetB303.jpg,0,0,0.0007599592,True
-Image_resize_671  (395).jpg,0,0,0.0,True
+sample_infected.jpg,1,1,0.9999552,True
+sample_uninfected.jpg,1,0,0.08496851,False

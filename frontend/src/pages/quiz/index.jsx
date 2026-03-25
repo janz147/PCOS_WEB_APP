@@ -125,7 +125,277 @@ const QuizPage = () => {
   }, [answers?.['Waist(inch)'], answers?.['Hip(inch)']]);
 
   // Quiz sections - reorganized to group related inputs
-  const quizSections = [
+  const quizSections = quizType === 'general' ? [
+    {
+      id: 1,
+      title: '🌸 Period & Cycle Tracking',
+      description: 'Tell us about your menstrual cycle and period symptoms',
+      questions: [
+        {
+          id: 'Age (yrs)',
+          type: 'number',
+          label: 'How old are you?',
+          placeholder: 'Enter your age',
+          unit: 'years',
+          min: 10,
+          max: 80,
+          step: 1,
+          required: true,
+          helpText: 'Age is required for accurate assessment (10–80 years)'
+        },
+        {
+          id: 'last_period_date',
+          type: 'date',
+          label: 'When did your last period start?',
+          required: false,
+          helpText: 'The first day you noticed bleeding'
+        },
+        {
+          id: 'Cycle(R/I)',
+          type: 'radio',
+          label: 'Are your periods usually:',
+          options: [
+            { value: '0', label: 'Regular (come around the same time each month)' },
+            { value: '1', label: 'Irregular (hard to predict or often late/early)' }
+          ],
+          required: false
+        },
+        {
+          id: 'Cycle length(days)',
+          type: 'radio',
+          label: 'How many days does your period usually last?',
+          options: [
+            { value: '1.5', label: '1–2 days' },
+            { value: '3.5', label: '3–4 days' },
+            { value: '6', label: '5–7 days' },
+            { value: '8', label: 'More than 7 days' }
+          ],
+          required: false
+        },
+        {
+          id: 'skipped_period',
+          type: 'radio',
+          label: 'Have you skipped a period in the last 6 months (not pregnant)?',
+          options: [
+            { value: 'no', label: 'No' },
+            { value: 'once', label: 'Yes, once' },
+            { value: 'more', label: 'Yes, more than once' }
+          ],
+          required: false
+        },
+        {
+          id: 'period_symptoms',
+          type: 'checkbox',
+          label: 'Which of these do you notice around your period? (Select all that apply)',
+          options: [
+            { value: 'cramps', label: 'Cramps or pain' },
+            { value: 'bloating', label: 'Bloating or PMS symptoms' },
+            { value: 'mood_changes', label: 'Mood changes (irritability, sadness, anxiety)' },
+            { value: 'loose_stools', label: 'Loose stools or mild diarrhea' },
+            { value: 'constipation', label: 'Constipation' },
+            { value: 'fatigue', label: 'Low energy or fatigue' },
+            { value: 'sleep_trouble', label: 'Trouble sleeping' },
+            { value: 'none', label: 'None of these' }
+          ],
+          required: false
+        }
+      ]
+    },
+    {
+      id: 2,
+      title: '📏 Body Measurements',
+      description: 'Help us understand your body measurements',
+      questions: [
+        {
+          id: 'Weight (Kg)',
+          type: 'number',
+          label: 'Your weight',
+          placeholder: 'Enter weight',
+          unit: 'kg',
+          min: 20,
+          max: 300,
+          step: 0.1,
+          required: false,
+          helpText: 'Weight in kilograms'
+        },
+        {
+          id: 'Height(Cm)',
+          type: 'number',
+          label: 'Your height',
+          placeholder: 'Enter height',
+          unit: 'cm',
+          min: 100,
+          max: 250,
+          step: 0.1,
+          required: false,
+          helpText: 'Height in centimeters'
+        },
+        {
+          id: 'Waist(inch)',
+          type: 'number',
+          label: 'Waist size',
+          placeholder: 'Enter waist measurement',
+          unit: 'in',
+          min: 15,
+          max: 80,
+          step: 0.1,
+          required: false,
+          helpText: 'Measure around your belly at belly-button level'
+        },
+        {
+          id: 'Hip(inch)',
+          type: 'number',
+          label: 'Hip size',
+          placeholder: 'Enter hip measurement',
+          unit: 'in',
+          min: 20,
+          max: 80,
+          step: 0.1,
+          required: false,
+          helpText: 'Measure around the widest part of your hips or buttocks'
+        }
+      ]
+    },
+    {
+      id: 3,
+      title: '⚡ Energy & Hunger Signals',
+      description: 'Tell us about your energy levels and hunger patterns',
+      questions: [
+        {
+          id: 'energy_hunger_signals',
+          type: 'checkbox',
+          label: 'Do you often experience any of the following? (Select all that apply)',
+          options: [
+            { value: 'tired_after_meals', label: 'Feeling very tired or sleepy after meals' },
+            { value: 'sweet_cravings', label: 'Strong cravings for sweets or carbs' },
+            { value: 'weight_gain_easy', label: 'Gaining weight easily' },
+            { value: 'hungry_after_eating', label: 'Feeling hungry again shortly after eating' },
+            { value: 'none', label: 'None of these' }
+          ],
+          required: false
+        }
+      ]
+    },
+    {
+      id: 4,
+      title: '💆‍♀️ Skin & Hair',
+      description: 'Tell us about any skin or hair changes you\'ve noticed',
+      questions: [
+        {
+          id: 'Pimples(Y/N)',
+          type: 'toggle',
+          label: 'Do you have ongoing acne (not just occasional breakouts)?',
+          required: false,
+          helpText: 'Persistent acne or oily skin'
+        },
+        {
+          id: 'Hair loss(Y/N)',
+          type: 'toggle',
+          label: 'Have you noticed thinning hair on your scalp?',
+          required: false,
+          helpText: 'Thinning or shedding hair on the scalp'
+        },
+        {
+          id: 'hair growth(Y/N)',
+          type: 'toggle',
+          label: 'Do you have more body or facial hair than you\'re comfortable with?',
+          required: false,
+          helpText: 'Excess hair growth in male-pattern areas (hirsutism)'
+        }
+      ]
+    },
+    {
+      id: 5,
+      title: '🧠 Daily Lifestyle',
+      description: 'Tell us about your daily activity, sleep, and stress',
+      questions: [
+        {
+          id: 'Reg.Exercise(Y/N)',
+          type: 'radio',
+          label: 'How active are you most days?',
+          options: [
+            { value: 'N', label: 'Mostly sitting or little movement' },
+            { value: 'light', label: 'Light activity (walking, light exercise)' },
+            { value: 'Y', label: 'Regular exercise or active lifestyle' }
+          ],
+          required: false
+        },
+        {
+          id: 'sleep_hours',
+          type: 'radio',
+          label: 'How much do you usually sleep per night?',
+          options: [
+            { value: 'less5', label: 'Less than 5 hours' },
+            { value: '5to6', label: '5–6 hours' },
+            { value: '7to9', label: '7–9 hours' },
+            { value: 'more9', label: 'More than 9 hours' }
+          ],
+          required: false
+        },
+        {
+          id: 'stress_level',
+          type: 'radio',
+          label: 'How stressed do you feel most days?',
+          options: [
+            { value: 'low', label: 'Low' },
+            { value: 'moderate', label: 'Moderate' },
+            { value: 'high', label: 'High' }
+          ],
+          required: false
+        }
+      ]
+    },
+    {
+      id: 6,
+      title: '🍽️ Eating Habits',
+      description: 'Tell us about your typical eating patterns',
+      questions: [
+        {
+          id: 'meal_pattern',
+          type: 'radio',
+          label: 'Which best describes how you eat most days?',
+          options: [
+            { value: '3meals', label: '3 regular meals a day' },
+            { value: 'small_snacks', label: 'Small meals or snacks throughout the day' },
+            { value: 'irregular', label: 'Meal times change a lot' }
+          ],
+          required: false
+        },
+        {
+          id: 'Fast food (Y/N)',
+          type: 'radio',
+          label: 'How often do you eat or drink sugary foods (desserts, sweet drinks)?',
+          options: [
+            { value: 'N', label: 'Rarely' },
+            { value: 'sometimes', label: 'Sometimes' },
+            { value: 'Y', label: 'Often' }
+          ],
+          required: false
+        }
+      ]
+    },
+    {
+      id: 7,
+      title: '👨‍👩‍👧 Family Health',
+      description: 'Tell us about your family health history',
+      questions: [
+        {
+          id: 'family_diabetes',
+          type: 'toggle',
+          label: 'Does anyone in your family have diabetes?',
+          required: false,
+          helpText: 'Includes parents, siblings, or grandparents'
+        },
+        {
+          id: 'family_pcos',
+          type: 'toggle',
+          label: 'Does anyone in your family have PCOS?',
+          required: false,
+          helpText: 'Includes mother, sisters, or other female relatives'
+        }
+      ]
+    }
+  ] : [
     {
       id: 1,
       title: 'Personal Details',
@@ -671,6 +941,95 @@ const QuizPage = () => {
           </div>
         )}
 
+        {/* Date Input */}
+        {question?.type === 'date' && (
+          <input
+            type="date"
+            value={value || ''}
+            onChange={(e) => handleAnswer(question?.id, e?.target?.value)}
+            disabled={isSubmitting}
+            aria-label={question?.label}
+            aria-required={question?.required}
+            aria-invalid={!!error}
+            className={cn(
+              "w-full px-4 py-2.5 rounded-lg border-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-default",
+              error ? "border-red-500" : "border-primary/20 focus:border-primary"
+            )}
+          />
+        )}
+
+        {/* Radio Buttons */}
+        {question?.type === 'radio' && (
+          <div className="space-y-2">
+            {question?.options?.map((option) => (
+              <label
+                key={option?.value}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-default",
+                  value === option?.value
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-primary/5",
+                  isSubmitting && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <input
+                  type="radio"
+                  name={question?.id}
+                  value={option?.value}
+                  checked={value === option?.value}
+                  onChange={() => handleAnswer(question?.id, option?.value)}
+                  disabled={isSubmitting}
+                  className="accent-primary w-4 h-4 flex-shrink-0"
+                />
+                <span className="text-sm">{option?.label}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        {/* Checkbox (multi-select) */}
+        {question?.type === 'checkbox' && (
+          <div className="space-y-2">
+            {question?.options?.map((option) => {
+              const selected = Array.isArray(value) ? value?.includes(option?.value) : false;
+              return (
+                <label
+                  key={option?.value}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-default",
+                    selected
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-primary/5",
+                    isSubmitting && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    value={option?.value}
+                    checked={selected}
+                    onChange={() => {
+                      const current = Array.isArray(value) ? [...value] : [];
+                      if (option?.value === 'none') {
+                        handleAnswer(question?.id, selected ? [] : ['none']);
+                      } else {
+                        const withoutNone = current?.filter(v => v !== 'none');
+                        if (selected) {
+                          handleAnswer(question?.id, withoutNone?.filter(v => v !== option?.value));
+                        } else {
+                          handleAnswer(question?.id, [...withoutNone, option?.value]);
+                        }
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="accent-primary w-4 h-4 flex-shrink-0"
+                  />
+                  <span className="text-sm">{option?.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+
         {/* Select/Dropdown */}
         {question?.type === 'select' && (
           <select
@@ -1070,7 +1429,11 @@ const QuizPage = () => {
                   </div>
                 ) : (
                   /* Regular Questions Grid */
-                  (<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  (<div className={cn(
+                    "grid gap-6",
+                    currentSectionData?.questions?.some(q => q?.type === 'radio' || q?.type === 'checkbox' || q?.type === 'date')
+                      ? "grid-cols-1" :"grid-cols-1 md:grid-cols-2"
+                  )}>
                     {currentSectionData?.questions?.map(question => renderQuestionInput(question))}
                   </div>)
                 )}
