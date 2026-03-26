@@ -31,7 +31,7 @@ import { predictTabular, predictImage } from '../../hooks/usePrediction';
 const mapAnswersToModel = (answers) => {
   // Helper to convert Y/N toggle values
   const toYN = (val) => val === true || val === 'Y' ? 'Y' : 'N';
-  
+
   // Helper to parse numeric or return null
   const toNum = (val) => {
     if (val === '' || val === null || val === undefined) return null;
@@ -47,32 +47,32 @@ const mapAnswersToModel = (answers) => {
   const payload = {
     "Age (yrs)": age, // REQUIRED - maps to age input
     "Weight (Kg)": toNum(answers?.['Weight (Kg)']), // maps to weight input
-    "Height(Cm)":toNum(answers?.['Height(Cm)']), // maps to height input
-    "BMI":toNum(answers?.['BMI']), // auto-calculated or manual override
-    "Cycle(R/I)":toNum(answers?.['Cycle(R/I)']), // 0=Regular, 1=Irregular
-    "Cycle length(days)":toNum(answers?.['Cycle length(days)']),
-    "Marraige Status (Yrs)":toNum(answers?.['Marraige Status (Yrs)']),
-    "Pregnant(Y/N)":toYN(answers?.['Pregnant(Y/N)']),
-    "No. of aborptions":toNum(answers?.['No. of aborptions']),
-    "I   beta-HCG(mIU/mL)":toNum(answers?.['I   beta-HCG(mIU/mL)']),
-    "FSH(mIU/mL)":toNum(answers?.['FSH(mIU/mL)']),
-    "LH(mIU/mL)":toNum(answers?.['LH(mIU/mL)']),
-    "FSH/LH":toNum(answers?.['FSH/LH']),
-    "Hip(inch)":toNum(answers?.['Hip(inch)']),
-    "Waist(inch)":toNum(answers?.['Waist(inch)']),
-    "Waist:Hip Ratio":toNum(answers?.['Waist:Hip Ratio']),
-    "TSH (mIU/L)":toNum(answers?.['TSH (mIU/L)']),
-    "PRL(ng/mL)":toNum(answers?.['PRL(ng/mL)']),
-    "Vit D3 (ng/mL)":toNum(answers?.['Vit D3 (ng/mL)']),
-    "PRG(ng/mL)":toNum(answers?.['PRG(ng/mL)']),
-    "RBS(mg/dl)":toNum(answers?.['RBS(mg/dl)']),
-    "Weight gain(Y/N)":toYN(answers?.['Weight gain(Y/N)']),
-    "hair growth(Y/N)":toYN(answers?.['hair growth(Y/N)']),
-    "Skin darkening (Y/N)":toYN(answers?.['Skin darkening (Y/N)']),
-    "Hair loss(Y/N)":toYN(answers?.['Hair loss(Y/N)']),
-    "Pimples(Y/N)":toYN(answers?.['Pimples(Y/N)']),
-    "Fast food (Y/N)":toYN(answers?.['Fast food (Y/N)']),
-    "Reg.Exercise(Y/N)":toYN(answers?.['Reg.Exercise(Y/N)']),
+    "Height(Cm)": toNum(answers?.['Height(Cm)']), // maps to height input
+    "BMI": toNum(answers?.['BMI']), // auto-calculated or manual override
+    "Cycle(R/I)": toNum(answers?.['Cycle(R/I)']), // 0=Regular, 1=Irregular
+    "Cycle length(days)": toNum(answers?.['Cycle length(days)']),
+    "Marraige Status (Yrs)": toNum(answers?.['Marraige Status (Yrs)']),
+    "Pregnant(Y/N)": toYN(answers?.['Pregnant(Y/N)']),
+    "No. of aborptions": toNum(answers?.['No. of aborptions']),
+    "I   beta-HCG(mIU/mL)": toNum(answers?.['I   beta-HCG(mIU/mL)']),
+    "FSH(mIU/mL)": toNum(answers?.['FSH(mIU/mL)']),
+    "LH(mIU/mL)": toNum(answers?.['LH(mIU/mL)']),
+    "FSH/LH": toNum(answers?.['FSH/LH']),
+    "Hip(inch)": toNum(answers?.['Hip(inch)']),
+    "Waist(inch)": toNum(answers?.['Waist(inch)']),
+    "Waist:Hip Ratio": toNum(answers?.['Waist:Hip Ratio']),
+    "TSH (mIU/L)": toNum(answers?.['TSH (mIU/L)']),
+    "PRL(ng/mL)": toNum(answers?.['PRL(ng/mL)']),
+    "Vit D3 (ng/mL)": toNum(answers?.['Vit D3 (ng/mL)']),
+    "PRG(ng/mL)": toNum(answers?.['PRG(ng/mL)']),
+    "RBS(mg/dl)": toNum(answers?.['RBS(mg/dl)']),
+    "Weight gain(Y/N)": toYN(answers?.['Weight gain(Y/N)']),
+    "hair growth(Y/N)": toYN(answers?.['hair growth(Y/N)']),
+    "Skin darkening (Y/N)": toYN(answers?.['Skin darkening (Y/N)']),
+    "Hair loss(Y/N)": toYN(answers?.['Hair loss(Y/N)']),
+    "Pimples(Y/N)": toYN(answers?.['Pimples(Y/N)']),
+    "Fast food (Y/N)": toYN(answers?.['Fast food (Y/N)']),
+    "Reg.Exercise(Y/N)": toYN(answers?.['Reg.Exercise(Y/N)']),
     partial_input: importantFieldsMissing
   };
 
@@ -99,7 +99,7 @@ const QuizPage = () => {
   useEffect(() => {
     const weight = parseFloat(answers?.['Weight (Kg)']);
     const height = parseFloat(answers?.['Height(Cm)']);
-    
+
     if (weight > 0 && height > 0) {
       const heightInMeters = height / 100;
       const bmi = weight / (heightInMeters * heightInMeters);
@@ -114,7 +114,7 @@ const QuizPage = () => {
   useEffect(() => {
     const waist = parseFloat(answers?.['Waist(inch)']);
     const hip = parseFloat(answers?.['Hip(inch)']);
-    
+
     if (waist > 0 && hip > 0) {
       const ratio = waist / hip;
       setAnswers(prev => ({
@@ -398,210 +398,215 @@ const QuizPage = () => {
   ] : [
     {
       id: 1,
-      title: 'Personal Details',
-      description: 'Basic information and body measurements',
+      title: 'Client Details',
+      description: 'DATA CHECKLIST',
       questions: [
         {
           id: 'Age (yrs)',
           type: 'number',
-          label: 'Age',
-          placeholder: 'Enter age in years',
+          label: 'Age of Client',
+          placeholder: 'Enter age',
           unit: 'years',
           min: 10,
           max: 80,
           step: 1,
           required: true,
-          helpText: 'Age is required for accurate assessment (10-80 years)'
+          helpText: 'Age of the client'
         },
         {
-          id: 'Weight (Kg)',
-          type: 'number',
-          label: 'Weight',
-          placeholder: 'Enter weight',
-          unit: 'Kg',
-          min: 20,
-          max: 300,
-          step: 0.1,
+          id: 'LMP',
+          type: 'date',
+          label: 'LMP',
           required: false,
-          helpText: 'Weight in kilograms'
-        },
-        {
-          id: 'Height(Cm)',
-          type: 'number',
-          label: 'Height',
-          placeholder: 'Enter height',
-          unit: 'cm',
-          min: 100,
-          max: 250,
-          step: 0.1,
-          required: false,
-          helpText: 'Height in centimeters'
-        },
-        {
-          id: 'BMI',
-          type: 'number',
-          label: 'Body Mass Index (BMI)',
-          placeholder: 'Auto-calculated',
-          unit: 'kg/m²',
-          step: 0.01,
-          required: false,
-          helpText: 'BMI auto-calculated from weight & height. You can override if needed.',
-          autoCalculated: true
+          helpText: 'Last menstrual period (mm/dd/yr)'
         }
       ]
     },
     {
       id: 2,
-      title: 'Optional Measurements',
-      description: 'Additional measurements (all optional)',
+      title: '🌸 Hormonal Dynamics',
+      description: 'Hormonal and metabolic markers',
       questions: [
         {
-          id: 'Marraige Status (Yrs)',
+          id: 'FSH(mIU/mL)',
           type: 'number',
-          label: 'Marriage Status',
-          placeholder: 'Years married (optional)',
-          unit: 'years',
+          label: 'FSH Levels',
+          placeholder: 'Enter FSH level',
+          unit: 'IU/L',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'LH(mIU/mL)',
+          type: 'number',
+          label: 'LSH Levels',
+          placeholder: 'Enter LSH level',
+          unit: 'IU/L',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Total Testosterone (ng/dL)',
+          type: 'number',
+          label: 'Total Testosterone',
+          placeholder: 'Enter value',
+          unit: 'ng/dL',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Androstenedione (ng/dL)',
+          type: 'number',
+          label: 'Androstenedione',
+          placeholder: 'Enter value',
+          unit: 'ng/dL',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'SHBG (nmol/L)',
+          type: 'number',
+          label: 'Sex Hormone Binding Globulin',
+          placeholder: 'Enter value',
+          unit: 'nmol/L',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'DHEAS (µg/dL)',
+          type: 'number',
+          label: 'Dehydroepiandosterone Sulfate',
+          placeholder: 'Enter value',
+          unit: 'µg/dL',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Fasting Insulin (µIU/mL)',
+          type: 'number',
+          label: 'Fasting Insulin',
+          placeholder: 'Enter value',
+          unit: 'µIU/mL',
+          min: 0,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Fasting Plasma Glucose (mg/dL)',
+          type: 'number',
+          label: 'Fasting Plasma Glucose',
+          placeholder: 'Enter value',
+          unit: 'mg/dL',
           min: 0,
           step: 1,
-          required: false,
-          helpText: 'Leave blank if not applicable'
+          required: false
         },
         {
-          id: 'Hip(inch)',
+          id: 'Estradiol (pg/mL)',
           type: 'number',
-          label: 'Hip Measurement',
-          placeholder: 'Enter hip measurement',
-          unit: 'inches',
-          min: 20,
-          max: 80,
+          label: 'Estradiol Levels',
+          placeholder: 'Enter value',
+          unit: 'pg/mL',
+          min: 0,
           step: 0.1,
-          required: false,
-          helpText: 'Hip circumference in inches'
+          required: false
         },
         {
-          id: 'Waist(inch)',
+          id: 'PRG(ng/mL)',
           type: 'number',
-          label: 'Waist Measurement',
-          placeholder: 'Enter waist measurement',
-          unit: 'inches',
-          min: 15,
-          max: 80,
+          label: 'Progesterone Levels',
+          placeholder: 'Enter value',
+          unit: 'ng/mL',
+          min: 0,
           step: 0.1,
-          required: false,
-          helpText: 'Waist circumference in inches'
-        },
-        {
-          id: 'Waist:Hip Ratio',
-          type: 'number',
-          label: 'Waist to Hip Ratio',
-          placeholder: 'Auto-calculated',
-          step: 0.001,
-          required: false,
-          helpText: 'Auto-calculated from waist & hip. You can override if needed.',
-          autoCalculated: true
+          required: false
         }
       ]
     },
     {
       id: 3,
-      title: 'Reproductive & Labs',
-      description: 'Menstrual cycle, pregnancy history, and lab values (all optional)',
+      title: '📏 Body Measurements',
+      description: 'Physical measurements',
       questions: [
         {
-          id: 'Cycle(R/I)',
-          type: 'select',
-          label: 'Menstrual Cycle',
-          options: [
-            { value: '0', label: 'Regular' },
-            { value: '1', label: 'Irregular' }
-          ],
-          required: false,
-          helpText: 'Regular = predictable cycle length; Irregular = unpredictable'
+          id: 'Weight (Kg)',
+          type: 'number',
+          label: 'Weight',
+          placeholder: 'Enter weight',
+          unit: 'kg',
+          min: 20,
+          max: 300,
+          step: 0.1,
+          required: false
         },
         {
-          id: 'Cycle length(days)',
+          id: 'Height(In)',
           type: 'number',
-          label: 'Cycle Length',
-          placeholder: 'Average cycle length',
-          unit: 'days',
-          min: 15,
-          max: 60,
-          step: 1,
-          required: false,
-          helpText: 'Typical range: 21-35 days'
+          label: 'Height',
+          placeholder: 'Enter height',
+          unit: 'in',
+          min: 40,
+          max: 90,
+          step: 0.1,
+          required: false
         },
         {
-          id: 'No. of aborptions',
+          id: 'Waist(Cm)',
           type: 'number',
-          label: 'Number of Miscarriages',
-          placeholder: 'Enter number',
+          label: 'Waist Circumference',
+          placeholder: 'Enter waist measurement',
+          unit: 'cm',
+          min: 40,
+          max: 200,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Hip(Cm)',
+          type: 'number',
+          label: 'Hip Circumference',
+          placeholder: 'Enter hip measurement',
+          unit: 'cm',
+          min: 40,
+          max: 200,
+          step: 0.1,
+          required: false
+        },
+        {
+          id: 'Body Fat Percentage',
+          type: 'number',
+          label: 'Body Fat Percentage',
+          placeholder: 'Enter body fat %',
+          unit: '%',
           min: 0,
-          step: 1,
-          required: false,
-          helpText: 'Leave blank if not applicable'
+          max: 100,
+          step: 0.1,
+          required: false
         },
         {
-          id: 'Pregnant(Y/N)',
-          type: 'toggle',
-          label: 'Currently Pregnant',
+          id: 'BMI',
+          type: 'number',
+          label: 'BMI',
+          placeholder: 'Auto-calculated',
+          unit: 'kg/m²',
+          step: 0.01,
           required: false,
-          helpText: 'Select Yes or No'
-        }
-      ]
-    },
-    {
-      id: 5,
-      title: 'Symptoms & Lifestyle',
-      description: 'Common PCOS symptoms and lifestyle factors',
-      questions: [
-        {
-          id: 'Weight gain(Y/N)',
-          type: 'toggle',
-          label: 'Weight Gain',
-          required: false,
-          helpText: 'Unexplained or difficult-to-control weight gain'
+          autoCalculated: true
         },
         {
-          id: 'hair growth(Y/N)',
-          type: 'toggle',
-          label: 'Excess Hair Growth',
+          id: 'Waist:Hip Ratio',
+          type: 'number',
+          label: 'Waist:Hip Ratio',
+          placeholder: 'Auto-calculated',
+          step: 0.001,
           required: false,
-          helpText: 'Hirsutism - excess hair growth in male-pattern areas'
-        },
-        {
-          id: 'Skin darkening (Y/N)',
-          type: 'toggle',
-          label: 'Skin Darkening',
-          required: false,
-          helpText: 'Dark patches in skin folds (acanthosis nigricans)'
-        },
-        {
-          id: 'Hair loss(Y/N)',
-          type: 'toggle',
-          label: 'Hair Loss',
-          required: false,
-          helpText: 'Thinning hair on scalp'
-        },
-        {
-          id: 'Pimples(Y/N)',
-          type: 'toggle',
-          label: 'Acne',
-          required: false,
-          helpText: 'Persistent acne or oily skin'
-        },
-        {
-          id: 'Fast food (Y/N)',
-          type: 'toggle',
-          label: 'Fast Food Consumption',
-          required: false,
-          helpText: 'Frequent consumption of processed or fast food'
-        },
-        {
-          id: 'Reg.Exercise(Y/N)',
-          type: 'toggle',
-          label: 'Regular Exercise',
-          required: false,
-          helpText: 'Regular physical activity (3+ times per week)'
+          autoCalculated: true
         }
       ]
     }
@@ -714,7 +719,7 @@ const QuizPage = () => {
         }
       ]
     };
-    
+
     // Insert hormones section at position 3 (after Reproductive & Labs, before Symptoms)
     quizSections?.splice(3, 0, hormonesSection);
   }
@@ -734,7 +739,7 @@ const QuizPage = () => {
         }
       ]
     };
-    
+
     quizSections?.push(imageUploadSection);
   }
 
@@ -784,7 +789,7 @@ const QuizPage = () => {
         }
       }
     });
-    
+
     setValidationErrors(errors);
     return Object.keys(errors)?.length === 0;
   };
@@ -801,7 +806,7 @@ const QuizPage = () => {
       // Step 1: Upload image if professional quiz and images exist
       if (quizType === 'professional' && uploadedImages?.length > 0) {
         const mostRecentImage = uploadedImages?.[uploadedImages?.length - 1];
-        
+
         console.log('Uploading image to /predict-image...');
         const imgResponse = await predictImage(mostRecentImage?.file);
 
@@ -864,7 +869,7 @@ const QuizPage = () => {
 
     // Check if we're on the last section
     const isLastSection = currentSection === quizSections?.length - 1;
-    
+
     if (isLastSection) {
       const modelPayload = mapAnswersToModel(answers);
       if (modelPayload?.partial_input && !showPartialWarning) {
@@ -904,7 +909,7 @@ const QuizPage = () => {
             <span className="text-red-500 ml-1" aria-label="required">*</span>
           )}
         </label>
-        
+
         {question?.helpText && (
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             <Icon name="Info" size={12} className="flex-shrink-0 mt-0.5" />
@@ -1065,7 +1070,7 @@ const QuizPage = () => {
               className={cn(
                 "flex-1 px-4 py-2.5 rounded-lg border-2 font-medium transition-default text-sm",
                 value === false
-                  ? "border-primary bg-primary text-white" :"border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
+                  ? "border-primary bg-primary text-white" : "border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
                 isSubmitting && "opacity-50 cursor-not-allowed"
               )}
             >
@@ -1080,7 +1085,7 @@ const QuizPage = () => {
               className={cn(
                 "flex-1 px-4 py-2.5 rounded-lg border-2 font-medium transition-default text-sm",
                 value === true
-                  ? "border-primary bg-primary text-white" :"border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
+                  ? "border-primary bg-primary text-white" : "border-border bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
                 isSubmitting && "opacity-50 cursor-not-allowed"
               )}
             >
@@ -1107,9 +1112,9 @@ const QuizPage = () => {
           <meta name="description" content="Take our comprehensive PCOS assessment quiz to understand your symptoms and get personalized recommendations." />
         </Helmet>
         <Sidebar isOpen={isSidebarOpen} />
-        <HamburgerButton 
-          isOpen={isSidebarOpen} 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+        <HamburgerButton
+          isOpen={isSidebarOpen}
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <BackButton isSidebarOpen={isSidebarOpen} />
         <main className="min-h-screen bg-background smooth-scroll ml-20">
@@ -1135,7 +1140,7 @@ const QuizPage = () => {
                 <span className="text-sm font-medium text-primary">{Math.round(progressPercentage)}%</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-primary transition-default"
                   style={{ width: `${progressPercentage}%` }}
                 />
@@ -1184,10 +1189,10 @@ const QuizPage = () => {
                           "w-12 h-12 rounded-full flex items-center justify-center",
                           error ? "bg-red-100" : "bg-primary/10"
                         )}>
-                          <Icon 
-                            name={error ? "AlertCircle" : "CheckCircle"} 
-                            size={24} 
-                            color={error ? "#ef4444" : "var(--color-primary)"} 
+                          <Icon
+                            name={error ? "AlertCircle" : "CheckCircle"}
+                            size={24}
+                            color={error ? "#ef4444" : "var(--color-primary)"}
                           />
                         </div>
                         <div>
@@ -1249,7 +1254,7 @@ const QuizPage = () => {
                                 <span className={cn(
                                   "px-4 py-1.5 rounded-full text-sm font-semibold",
                                   results?.tabular?.probability >= 0.5
-                                    ? "bg-red-100 text-red-700" :"bg-green-100 text-green-700"
+                                    ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
                                 )}>
                                   {results?.tabular?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
                                 </span>
@@ -1281,7 +1286,7 @@ const QuizPage = () => {
                                 <span className={cn(
                                   "px-4 py-1.5 rounded-full text-sm font-semibold",
                                   results?.image?.probability >= 0.5
-                                    ? "bg-red-100 text-red-700" :"bg-green-100 text-green-700"
+                                    ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
                                 )}>
                                   {results?.image?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
                                 </span>
@@ -1432,7 +1437,7 @@ const QuizPage = () => {
                   (<div className={cn(
                     "grid gap-6",
                     currentSectionData?.questions?.some(q => q?.type === 'radio' || q?.type === 'checkbox' || q?.type === 'date')
-                      ? "grid-cols-1" :"grid-cols-1 md:grid-cols-2"
+                      ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
                   )}>
                     {currentSectionData?.questions?.map(question => renderQuestionInput(question))}
                   </div>)
