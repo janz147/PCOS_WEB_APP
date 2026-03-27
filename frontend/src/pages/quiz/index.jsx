@@ -27,56 +27,109 @@ import Button from '../../components/ui/Button';
 import { cn } from '../../utils/cn';
 import { predictTabular, predictImage } from '../../hooks/usePrediction';
 
+const TABULAR_MODEL_FIELDS = [
+  "Age (yrs)",
+  "Weight (Kg)",
+  "Height(Cm)",
+  "BMI",
+  "Cycle(R/I)",
+  "Cycle length(days)",
+  "Marraige Status (Yrs)",
+  "Pregnant(Y/N)",
+  "No. of aborptions",
+  "I   beta-HCG(mIU/mL)",
+  "FSH(mIU/mL)",
+  "LH(mIU/mL)",
+  "FSH/LH",
+  "Hip(inch)",
+  "Waist(inch)",
+  "Waist:Hip Ratio",
+  "TSH (mIU/L)",
+  "PRL(ng/mL)",
+  "Vit D3 (ng/mL)",
+  "PRG(ng/mL)",
+  "RBS(mg/dl)",
+  "Weight gain(Y/N)",
+  "hair growth(Y/N)",
+  "Skin darkening (Y/N)",
+  "Hair loss(Y/N)",
+  "Fast food (Y/N)",
+  "Reg.Exercise(Y/N)"
+];
+
+const MIN_FIELDS_FOR_ANY_RESULT = 1;
+const MIN_FIELDS_FOR_PRELIMINARY = 4;
+const MIN_FIELDS_FOR_CONFIDENT = 8;
+
+const getCompletenessLevel = (filledCount) => {
+  if (filledCount >= MIN_FIELDS_FOR_CONFIDENT) return 'confident';
+  if (filledCount >= MIN_FIELDS_FOR_PRELIMINARY) return 'preliminary';
+  if (filledCount >= MIN_FIELDS_FOR_ANY_RESULT) return 'insufficient';
+  return 'invalid';
+};
+
 // Map UI answers to model-ready JSON
 const mapAnswersToModel = (answers) => {
-  // Helper to convert Y/N toggle values
-  const toYN = (val) => val === true || val === 'Y' ? 'Y' : 'N';
-
-  // Helper to parse numeric or return null
   const toNum = (val) => {
     if (val === '' || val === null || val === undefined) return null;
     const num = parseFloat(val);
     return isNaN(num) ? null : num;
   };
 
-  // Check if important fields are missing
-  const age = toNum(answers?.['Age (yrs)']);
-  const importantFieldsMissing = !age;
-
-  // Build model payload with exact keys
-  const payload = {
-    "Age (yrs)": age, // REQUIRED - maps to age input
-    "Weight (Kg)": toNum(answers?.['Weight (Kg)']), // maps to weight input
-    "Height(Cm)": toNum(answers?.['Height(Cm)']), // maps to height input
-    "BMI": toNum(answers?.['BMI']), // auto-calculated or manual override
-    "Cycle(R/I)": toNum(answers?.['Cycle(R/I)']), // 0=Regular, 1=Irregular
-    "Cycle length(days)": toNum(answers?.['Cycle length(days)']),
-    "Marraige Status (Yrs)": toNum(answers?.['Marraige Status (Yrs)']),
-    "Pregnant(Y/N)": toYN(answers?.['Pregnant(Y/N)']),
-    "No. of aborptions": toNum(answers?.['No. of aborptions']),
-    "I   beta-HCG(mIU/mL)": toNum(answers?.['I   beta-HCG(mIU/mL)']),
-    "FSH(mIU/mL)": toNum(answers?.['FSH(mIU/mL)']),
-    "LH(mIU/mL)": toNum(answers?.['LH(mIU/mL)']),
-    "FSH/LH": toNum(answers?.['FSH/LH']),
-    "Hip(inch)": toNum(answers?.['Hip(inch)']),
-    "Waist(inch)": toNum(answers?.['Waist(inch)']),
-    "Waist:Hip Ratio": toNum(answers?.['Waist:Hip Ratio']),
-    "TSH (mIU/L)": toNum(answers?.['TSH (mIU/L)']),
-    "PRL(ng/mL)": toNum(answers?.['PRL(ng/mL)']),
-    "Vit D3 (ng/mL)": toNum(answers?.['Vit D3 (ng/mL)']),
-    "PRG(ng/mL)": toNum(answers?.['PRG(ng/mL)']),
-    "RBS(mg/dl)": toNum(answers?.['RBS(mg/dl)']),
-    "Weight gain(Y/N)": toYN(answers?.['Weight gain(Y/N)']),
-    "hair growth(Y/N)": toYN(answers?.['hair growth(Y/N)']),
-    "Skin darkening (Y/N)": toYN(answers?.['Skin darkening (Y/N)']),
-    "Hair loss(Y/N)": toYN(answers?.['Hair loss(Y/N)']),
-    "Pimples(Y/N)": toYN(answers?.['Pimples(Y/N)']),
-    "Fast food (Y/N)": toYN(answers?.['Fast food (Y/N)']),
-    "Reg.Exercise(Y/N)": toYN(answers?.['Reg.Exercise(Y/N)']),
-    partial_input: importantFieldsMissing
+  const toYN = (val) => {
+    if (val === true || val === 'Y') return 'Y';
+    if (val === false || val === 'N') return 'N';
+    return null;
   };
 
-  return payload;
+  const payload = {
+    "Age (yrs)": toNum(answers?.["Age (yrs)"]),
+    "Weight (Kg)": toNum(answers?.["Weight (Kg)"]),
+    "Height(Cm)": toNum(answers?.["Height(Cm)"]),
+    "BMI": toNum(answers?.["BMI"]),
+    "Cycle(R/I)": toNum(answers?.["Cycle(R/I)"]),
+    "Cycle length(days)": toNum(answers?.["Cycle length(days)"]),
+    "Marraige Status (Yrs)": toNum(answers?.["Marraige Status (Yrs)"]),
+    "Pregnant(Y/N)": toYN(answers?.["Pregnant(Y/N)"]),
+    "No. of aborptions": toNum(answers?.["No. of aborptions"]),
+    "I   beta-HCG(mIU/mL)": toNum(answers?.["I   beta-HCG(mIU/mL)"]),
+    "FSH(mIU/mL)": toNum(answers?.["FSH(mIU/mL)"]),
+    "LH(mIU/mL)": toNum(answers?.["LH(mIU/mL)"]),
+    "FSH/LH": toNum(answers?.["FSH/LH"]),
+    "Hip(inch)": toNum(answers?.["Hip(inch)"]),
+    "Waist(inch)": toNum(answers?.["Waist(inch)"]),
+    "Waist:Hip Ratio": toNum(answers?.["Waist:Hip Ratio"]),
+    "TSH (mIU/L)": toNum(answers?.["TSH (mIU/L)"]),
+    "PRL(ng/mL)": toNum(answers?.["PRL(ng/mL)"]),
+    "Vit D3 (ng/mL)": toNum(answers?.["Vit D3 (ng/mL)"]),
+    "PRG(ng/mL)": toNum(answers?.["PRG(ng/mL)"]),
+    "RBS(mg/dl)": toNum(answers?.["RBS(mg/dl)"]),
+    "Weight gain(Y/N)": toYN(answers?.["Weight gain(Y/N)"]),
+    "hair growth(Y/N)": toYN(answers?.["hair growth(Y/N)"]),
+    "Skin darkening (Y/N)": toYN(answers?.["Skin darkening (Y/N)"]),
+    "Hair loss(Y/N)": toYN(answers?.["Hair loss(Y/N)"]),
+    "Fast food (Y/N)": toYN(answers?.["Fast food (Y/N)"]),
+    "Reg.Exercise(Y/N)": toYN(answers?.["Reg.Exercise(Y/N)"])
+  };
+
+  const filledFields = TABULAR_MODEL_FIELDS.filter((field) => {
+    const v = payload?.[field];
+    return v !== null && v !== undefined && v !== '';
+  });
+
+  const filledCount = filledFields.length;
+  const completenessLevel = getCompletenessLevel(filledCount);
+
+  return {
+    ...payload,
+    filledCount,
+    completenessLevel,
+    missingFields: TABULAR_MODEL_FIELDS.filter((field) => {
+      const v = payload?.[field];
+      return v === null || v === undefined || v === '';
+    }),
+    readyForPrediction: filledCount >= MIN_FIELDS_FOR_ANY_RESULT
+  };
 };
 
 const QuizPage = () => {
@@ -162,15 +215,14 @@ const QuizPage = () => {
         },
         {
           id: 'Cycle length(days)',
-          type: 'radio',
-          label: 'How many days does your period usually last?',
-          options: [
-            { value: '1.5', label: '1–2 days' },
-            { value: '3.5', label: '3–4 days' },
-            { value: '6', label: '5–7 days' },
-            { value: '8', label: 'More than 7 days' }
-          ],
-          required: false
+          type: 'number',
+          label: 'How many days is your usual menstrual cycle?',
+          placeholder: 'Enter number of days between periods',
+          min: 15,
+          max: 60,
+          step: 1,
+          required: false,
+          helpText: 'This means days between periods, not how long bleeding lasts'
         },
         {
           id: 'skipped_period',
@@ -314,9 +366,8 @@ const QuizPage = () => {
           type: 'radio',
           label: 'How active are you most days?',
           options: [
-            { value: 'N', label: 'Mostly sitting or little movement' },
-            { value: 'light', label: 'Light activity (walking, light exercise)' },
-            { value: 'Y', label: 'Regular exercise or active lifestyle' }
+            { value: 'N', label: 'No regular exercise' },
+            { value: 'Y', label: 'Regular exercise' }
           ],
           required: false
         },
@@ -367,7 +418,6 @@ const QuizPage = () => {
           label: 'How often do you eat or drink sugary foods (desserts, sweet drinks)?',
           options: [
             { value: 'N', label: 'Rarely' },
-            { value: 'sometimes', label: 'Sometimes' },
             { value: 'Y', label: 'Often' }
           ],
           required: false
@@ -829,7 +879,12 @@ const QuizPage = () => {
         throw new Error(tabularResponse?.error || 'Prediction failed');
       }
 
-      const tabularResult = tabularResponse?.result;
+      const tabularResult = {
+        ...tabularResponse?.result,
+        completenessLevel: modelPayload?.completenessLevel,
+        filledCount: modelPayload?.filledCount,
+        missingFields: modelPayload?.missingFields
+      };
       console.log('Tabular prediction result:', tabularResult);
 
       // Step 3: Display results (even if image failed, show tabular result)
@@ -872,11 +927,18 @@ const QuizPage = () => {
 
     if (isLastSection) {
       const modelPayload = mapAnswersToModel(answers);
-      if (modelPayload?.partial_input && !showPartialWarning) {
-        setShowPartialWarning(true);
-        return; // Don't submit yet, show warning first
+
+      if (!modelPayload["Age (yrs)"]) {
+        setError("Age is required before submission.");
+        setShowResultModal(true);
+        return;
       }
-      // If warning already shown or no partial input, proceed with submission
+
+      if (modelPayload.completenessLevel !== 'confident' && !showPartialWarning) {
+        setShowPartialWarning(true);
+        return;
+      }
+
       handleSubmit();
       return;
     }
@@ -1154,7 +1216,7 @@ const QuizPage = () => {
                   <Icon name="AlertTriangle" size={24} color="#eab308" />
                   <div className="flex-1">
                     <h3 className="font-heading font-bold text-xl text-foreground">Some Information Missing</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Some clinical inputs are missing. Results will be partial. Do you want to proceed?</p>
+                    <p className="text-sm text-muted-foreground mt-1">Some fields are missing. The result will be partial, but you can still proceed.</p>
                     <div className="flex gap-3 mt-4">
                       <Button
                         variant="outline"
@@ -1238,27 +1300,68 @@ const QuizPage = () => {
                               <Icon name="Activity" size={20} />
                               Clinical Assessment
                             </h4>
+
                             <div className="space-y-3">
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
+                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
                                 <span className="text-sm text-muted-foreground">Prediction:</span>
-                                <span className="font-bold text-foreground text-lg">{results?.tabular?.predicted_label}</span>
-                              </div>
+                                <span className="font-bold text-foreground text-lg">
+                                  {results?.tabular?.predicted_label}
+                                </span>
+                              </div> */}
+
                               <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
                                 <span className="text-sm text-muted-foreground">Probability:</span>
                                 <span className="font-bold text-foreground text-lg">
                                   {results?.tabular?.probability_display || `${(results?.tabular?.probability * 100)?.toFixed(1)}%`}
                                 </span>
                               </div>
+
                               <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Risk Level:</span>
+                                <span className="text-sm text-muted-foreground">Assessment Type:</span>
                                 <span className={cn(
                                   "px-4 py-1.5 rounded-full text-sm font-semibold",
-                                  results?.tabular?.probability >= 0.5
-                                    ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                                  results?.tabular?.completenessLevel === 'confident'
+                                    ? "bg-green-100 text-green-700"
+                                    : results?.tabular?.completenessLevel === 'preliminary'
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-gray-100 text-gray-700"
                                 )}>
-                                  {results?.tabular?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
+                                  {results?.tabular?.completenessLevel === 'confident'
+                                    ? 'Full Assessment'
+                                    : results?.tabular?.completenessLevel === 'preliminary'
+                                      ? 'Preliminary Assessment'
+                                      : 'Insufficient Data'}
                                 </span>
                               </div>
+
+                              {results?.tabular?.completenessLevel !== 'confident' && (
+                                <div className={cn(
+                                  "p-4 rounded-xl border",
+                                  results?.tabular?.completenessLevel === 'preliminary'
+                                    ? "bg-yellow-50 border-yellow-200 text-yellow-800"
+                                    : "bg-gray-50 border-gray-200 text-gray-700"
+                                )}>
+                                  <p className="text-sm font-medium">
+                                    {results?.tabular?.completenessLevel === 'preliminary'
+                                      ? 'This is a preliminary result due to incomplete clinical data.'
+                                      : 'There is not enough data for a reliable clinical assessment.'}
+                                  </p>
+                                </div>
+                              )}
+
+                              {results?.tabular?.completenessLevel === 'confident' && (
+                                <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
+                                  <span className="text-sm text-muted-foreground">Risk Level:</span>
+                                  <span className={cn(
+                                    "px-4 py-1.5 rounded-full text-sm font-semibold",
+                                    results?.tabular?.probability >= 0.5
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-green-100 text-green-700"
+                                  )}>
+                                    {results?.tabular?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -1271,10 +1374,10 @@ const QuizPage = () => {
                               Ultrasound Analysis
                             </h4>
                             <div className="space-y-3">
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
+                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
                                 <span className="text-sm text-muted-foreground">Prediction:</span>
                                 <span className="font-bold text-foreground text-lg">{results?.image?.predicted_label}</span>
-                              </div>
+                              </div> */}
                               <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
                                 <span className="text-sm text-muted-foreground">Probability:</span>
                                 <span className="font-bold text-foreground text-lg">
