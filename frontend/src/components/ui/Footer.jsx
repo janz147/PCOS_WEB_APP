@@ -65,18 +65,18 @@ const Footer = ({ className = '' }) => {
                 <div className="flex items-start gap-2">
                   <Icon name="MapPin" size={18} className="mt-1 flex-shrink-0" />
                   <p className="text-sm">
-                    123 Health Street<br />
-                    Medical District<br />
-                    City, State 12345
+                    Legazpi City<br />
+                    Albay<br />
+                    Region V, Philippines
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Icon name="Phone" size={18} className="flex-shrink-0" />
-                  <p className="text-sm">+1 (555) 123-4567</p>
+                  <p className="text-sm">+63 912 345 6788</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Icon name="Mail" size={18} className="flex-shrink-0" />
-                  <p className="text-sm">support@pcoscare.com</p>
+                  <p className="text-sm">support@cystsense.com</p>
                 </div>
               </div>
             </div>
@@ -106,15 +106,9 @@ const Footer = ({ className = '' }) => {
           {/* Copyright */}
           <div className="mt-8 pt-8 border-t border-white/20 text-center">
             <p className="text-sm text-gray-700">
-              © {new Date()?.getFullYear()} PCOS Care. All rights reserved.
+              © {new Date()?.getFullYear()} CystSense. All rights reserved.
             </p>
-            <button
-              onClick={() => setShowTerms(true)}
-              className="mt-2 text-sm text-gray-700 hover:text-gray-900 underline underline-offset-2 transition-colors inline-flex items-center gap-1"
-            >
-              <Icon name="FileText" size={13} />
-              View Terms &amp; Conditions
-            </button>
+            
           </div>
         </div>
       </footer>

@@ -267,7 +267,7 @@ const PCOSCareDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>PCOS Care Dashboard - Comprehensive PCOS Support & Resources</title>
+        <title>CystSense Dashboard</title>
         <meta
           name="description"
           content="Access comprehensive PCOS support through educational resources, interactive quizzes, local clinic finder, and latest research updates. Manage your PCOS with confidence."
@@ -369,12 +369,12 @@ const PCOSCareDashboard = () => {
               </div>
             )}
 
-            <details className="mb-4 rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-xs text-muted-foreground">
+            {/* <details className="mb-4 rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-xs text-muted-foreground">
               <summary className="cursor-pointer font-semibold">Show debug JSON</summary>
               <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words">
                 {JSON.stringify(newsArticles, null, 2)}
               </pre>
-            </details>
+            </details> */}
 
             <NewsGrid articles={newsArticles} />
           </section>

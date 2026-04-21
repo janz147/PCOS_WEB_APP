@@ -1,5 +1,22 @@
-// API base URL for FastAPI backend
-const API_BASE = "http://127.0.0.1:8000";
+// frontend/src/hooks/usePrediction.js
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
+/**
+ * Safely parse response as JSON.
+ */
+async function parseResponse(response) {
+  const text = await response.text();
+
+  try {
+    return { ok: true, data: JSON.parse(text) };
+  } catch {
+    return {
+      ok: false,
+      error: `Response was not JSON: ${text.slice(0, 200)}`,
+    };
+  }
+}
 
 /**
  * Predict PCOS using tabular data
@@ -17,46 +34,41 @@ export const predictTabular = async (payload) => {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      const data = await response?.json();
+      const parsed = await parseResponse(response);
+      if (!parsed.ok) {
+        return { ok: false, error: parsed.error };
+      }
 
-      // Do NOT retry on 4xx errors (client errors)
-      if (response?.status >= 400 && response?.status < 500) {
-        return { 
-          ok: false, 
-          error: data?.detail || data?.message || data?.error || `Client error: ${response?.status}` 
+      const data = parsed.data;
+
+      if (response.status >= 400 && response.status < 500) {
+        return {
+          ok: false,
+          error: data?.detail || data?.message || data?.error || `Client error: ${response.status}`,
         };
       }
 
-      // Success
-      if (response?.ok && data?.success) {
+      if (response.ok && data?.success) {
         return { ok: true, result: data?.result };
       }
 
-      // Server error (5xx) - will retry
-      if (response?.status >= 500) {
+      if (response.status >= 500) {
         throw new Error(`Server error: ${response.status}`);
       }
 
-      // Other failures
       return { ok: false, error: data?.message || 'Prediction failed' };
-
     } catch (error) {
       console.error(`predictTabular attempt ${attempt + 1} failed:`, error);
       attempt++;
 
-      // If max retries exceeded, return error
       if (attempt > maxRetries) {
-        return { 
-          ok: false, 
-          error: error?.message || 'Network error after retries' 
-        };
+        return { ok: false, error: error?.message || 'Network error after retries' };
       }
 
-      // Exponential backoff: 500ms, then 1000ms
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
       delay = 1000;
     }
   }
@@ -78,50 +90,45 @@ export const predictImage = async (file) => {
   while (attempt <= maxRetries) {
     try {
       const formData = new FormData();
-      formData?.append('image', file);
+      formData.append('image', file);
 
       const response = await fetch(url, {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
-      const data = await response?.json();
+      const parsed = await parseResponse(response);
+      if (!parsed.ok) {
+        return { ok: false, error: parsed.error };
+      }
 
-      // Do NOT retry on 4xx errors (client errors)
-      if (response?.status >= 400 && response?.status < 500) {
-        return { 
-          ok: false, 
-          error: data?.detail || data?.message || data?.error || `Client error: ${response?.status}`
+      const data = parsed.data;
+
+      if (response.status >= 400 && response.status < 500) {
+        return {
+          ok: false,
+          error: data?.detail || data?.message || data?.error || `Client error: ${response.status}`,
         };
       }
 
-      // Success
-      if (response?.ok && data?.success) {
+      if (response.ok && data?.success) {
         return { ok: true, result: data?.result };
       }
 
-      // Server error (5xx) - will retry
-      if (response?.status >= 500) {
+      if (response.status >= 500) {
         throw new Error(`Server error: ${response.status}`);
       }
 
-      // Other failures
       return { ok: false, error: data?.message || 'Image prediction failed' };
-
     } catch (error) {
       console.error(`predictImage attempt ${attempt + 1} failed:`, error);
       attempt++;
 
-      // If max retries exceeded, return error
       if (attempt > maxRetries) {
-        return { 
-          ok: false, 
-          error: error?.message || 'Network error after retries' 
-        };
+        return { ok: false, error: error?.message || 'Network error after retries' };
       }
 
-      // Exponential backoff: 500ms, then 1000ms
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
       delay = 1000;
     }
   }

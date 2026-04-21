@@ -78,7 +78,7 @@ const RatingSurveyModal = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="font-heading font-bold text-lg text-foreground">Rating Survey</h2>
-              <p className="text-xs text-muted-foreground">Help us improve PCOS Care</p>
+              <p className="text-xs text-muted-foreground">Help us improve CystSense</p>
             </div>
           </div>
           <button
@@ -99,7 +99,7 @@ const RatingSurveyModal = ({ isOpen, onClose }) => {
               </div>
               <h3 className="font-heading font-bold text-xl text-foreground mb-2">Thank You!</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Your feedback has been recorded. We appreciate your time in helping us improve the PCOS Care application.
+                Your feedback has been recorded. We appreciate your time in helping us improve the CystSense application.
               </p>
               <button
                 onClick={handleClose}
@@ -111,7 +111,7 @@ const RatingSurveyModal = ({ isOpen, onClose }) => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Please rate your experience with the PCOS Care application. Your feedback helps us improve the quality of our service.
+                Please rate your experience with the CystSense application. Your feedback helps us improve the quality of our service.
               </p>
 
               {questions?.map((q) => (

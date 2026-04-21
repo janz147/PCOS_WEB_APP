@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import Icon from '../AppIcon';
 import TermsModal from './TermsModal';
+import image1 from '../../img/4.png';
 
 const Sidebar = ({ className = '', isOpen = false }) => {
   const navigate = useNavigate();
@@ -51,8 +52,12 @@ const Sidebar = ({ className = '', isOpen = false }) => {
         isOpen ? 'translate-x-0' : '-translate-x-full',
         className
       )}>
-        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-          <Icon name="Heart" size={24} color="var(--color-primary-foreground)" />
+        <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary/10 mb-4 md:mb-6 overflow-hidden">
+          <img
+            src={image1}
+            alt="CystSense Logo"
+            className="w-full h-full object-contain"
+          />
         </div>
 
         {/* Divider between logo and navigation */}

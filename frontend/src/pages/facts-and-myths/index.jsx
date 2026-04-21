@@ -92,7 +92,7 @@ const FactsAndMythsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Facts and Myths on PCOS - PCOS Care</title>
+        <title>Facts and Myths on PCOS - CystSense</title>
         <meta name="description" content="Separate fact from fiction about Polycystic Ovary Syndrome (PCOS). Learn the truth behind common myths and discover evidence-based facts about PCOS." />
       </Helmet>
       <Sidebar isOpen={isSidebarOpen} />

@@ -1170,7 +1170,7 @@ const QuizPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-primary/5 page-transition">
       <>
         <Helmet>
-          <title>PCOS Assessment Quiz - PCOS Care App</title>
+          <title>PCOS Assessment Quiz - CystSense App</title>
           <meta name="description" content="Take our comprehensive PCOS assessment quiz to understand your symptoms and get personalized recommendations." />
         </Helmet>
         <Sidebar isOpen={isSidebarOpen} />

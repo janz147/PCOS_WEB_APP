@@ -28,7 +28,7 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
             )}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               <Icon name="FileText" size={16} />
-              <span>Welcome to PCOS Care</span>
+              <span>Welcome to CystSense</span>
             </div>
             <h2 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">
               Terms &amp; Conditions
