@@ -68,6 +68,105 @@ const getCompletenessLevel = (filledCount) => {
   return 'invalid';
 };
 
+// Build user-friendly result items based on key answers for the general quiz (NEW UPDATE)
+const buildGeneralStaticAnswers = (answers) => {
+  const items = [];
+
+  const cycle = answers?.['Cycle(R/I)'];
+  if (cycle === '0') {
+    items.push({
+      title: 'Regular Menstruation',
+      text: 'Regular periods often mean your hormones are working in balance and ovulation is steady. Keeping up supportive habits like nourishing meals, gentle movement, good sleep, stress care, and staying aware of cycle changes can help maintain long-term hormonal and overall well-being.'
+    });
+  }
+
+  if (cycle === '1') {
+    items.push({
+      title: 'Irregular Menstruation',
+      text: 'Irregular periods can sometimes be a sign of changes in hormone balance. Missed or unpredictable cycles may be linked to ovulation or metabolic concerns. Supporting your body with regular routines, nourishing meals, good sleep, stress care, and seeking guidance when changes continue can help support cycle balance and overall well-being.'
+    });
+  }
+
+  const bleeding = Array.isArray(answers?.['days_of_bleeding'])
+    ? answers?.['days_of_bleeding']?.[0]
+    : answers?.['days_of_bleeding'];
+
+  if (bleeding === '1-2') {
+    items.push({
+      title: 'Bleeding Less Than 3 Days',
+      text: 'Short periods can sometimes be linked to low energy intake, stress, poor sleep, or changes in body weight. Supporting your body with nourishing meals, enough rest, stress care, and steady daily routines may help improve cycle balance and overall well-being.'
+    });
+  }
+
+  if (bleeding === '3-4' || bleeding === '5-7') {
+    items.push({
+      title: 'Bleeding 3 to 7 Days',
+      text: 'Bleeding that lasts 3 to 7 days is usually a sign of a balanced menstrual cycle. Continuing habits like nourishing meals, gentle movement, good sleep, stress care, and paying attention to cycle changes can help support overall well-being.'
+    });
+  }
+
+  if (bleeding === 'more_than_7') {
+    items.push({
+      title: 'Bleeding More Than 7 Days',
+      text: 'Bleeding that lasts longer than 7 days can be tiring for the body and may increase iron needs. Listening to your body, keeping track of your cycle, choosing nourishing foods, resting well, and managing stress can help support balance and overall well-being.'
+    });
+  }
+
+  const skipped = answers?.['skipped_period'];
+  if (skipped === 'yes') {
+    items.push({
+      title: 'Skipped Periods',
+      text: 'Missing a period can sometimes happen when the body is under stress, not getting enough energy, or when hormones are temporarily out of balance. Supporting your body with regular, nourishing meals, adequate sleep, gentle daily movement, and stress care can help encourage more consistent cycle patterns and long-term reproductive well-being.'
+    });
+  }
+
+  const symptoms = Array.isArray(answers?.['period_symptoms'])
+    ? answers?.['period_symptoms']
+    : [];
+
+  const symptomMap = {
+    cramps: {
+      title: 'Menstrual Pain',
+      text: 'Period pain can increase when inflammation and muscle tension are higher in the body. Gentle movement, warm foods or heat therapy, adequate hydration, stress reduction, and consistent sleep can help the body relax and may ease discomfort over time.'
+    },
+    bloating: {
+      title: 'Premenstrual Symptoms (PMS)',
+      text: 'PMS symptoms often reflect how the body responds to hormonal shifts before a period. Supporting stable blood sugar with regular meals, reducing excess salty or sugary foods, getting enough rest, and practicing stress care can help soften these premenstrual changes.'
+    },
+    mood_changes: {
+      title: 'Mood & Emotional Changes',
+      text: 'Mood changes around the cycle can happen when hormone levels interact with stress and sleep patterns. Prioritizing good sleep, balanced meals, gentle movement, and calming daily routines can help support emotional balance throughout the cycle.'
+    },
+    loose_stools: {
+      title: 'Digestive Changes',
+      text: 'Digestive changes near your period are common and are often linked to hormone effects on the gut. Staying well hydrated, eating fiber-rich foods, and maintaining regular meal times can help support smoother digestion during this time.'
+    },
+    constipation: {
+      title: 'Digestive Changes',
+      text: 'Digestive changes near your period are common and are often linked to hormone effects on the gut. Staying well hydrated, eating fiber-rich foods, and maintaining regular meal times can help support smoother digestion during this time.'
+    },
+    fatigue: {
+      title: 'Energy and Sleep Changes',
+      text: 'Feeling more tired or having sleep changes around your period can be a sign that your body is adjusting to hormonal shifts. Supporting consistent sleep routines, nourishing meals, and gentle movement can help stabilize energy levels and improve rest across the cycle.'
+    },
+    sleep_trouble: {
+      title: 'Energy and Sleep Changes',
+      text: 'Feeling more tired or having sleep changes around your period can be a sign that your body is adjusting to hormonal shifts. Supporting consistent sleep routines, nourishing meals, and gentle movement can help stabilize energy levels and improve rest across the cycle.'
+    }
+  };
+
+  const seen = new Set();
+  symptoms.forEach((key) => {
+    const item = symptomMap[key];
+    if (item && !seen.has(item.title)) {
+      seen.add(item.title);
+      items.push(item);
+    }
+  });
+
+  return items;
+};
+
 // Map UI answers to model-ready JSON
 const mapAnswersToModel = (answers) => {
   const toNum = (val) => {
@@ -132,6 +231,516 @@ const mapAnswersToModel = (answers) => {
   };
 };
 
+const getGeneralSectionGuidance = (section, answers) => {
+  const items = [];
+
+  // SECTION 1: Period and cycle tracking
+  if (section?.id === 1) {
+    const cycle = answers?.['Cycle(R/I)'];
+    if (cycle === '0') {
+      items.push({
+        title: 'Regular Menstruation',
+        text: 'Regular periods often mean your hormones are working in balance and ovulation is steady. Keeping up supportive habits like nourishing meals, gentle movement, good sleep, stress care, and staying aware of cycle changes can help maintain long-term hormonal and overall well-being.'
+      });
+    }
+
+    if (cycle === '1') {
+      items.push({
+        title: 'Irregular Menstruation',
+        text: 'Irregular periods can sometimes be a sign of changes in hormone balance. Missed or unpredictable cycles may be linked to ovulation or metabolic concerns. Supporting your body with regular routines, nourishing meals, good sleep, stress care, and seeking guidance when changes continue can help support cycle balance and overall well-being.'
+      });
+    }
+
+    const bleeding = answers?.['days_of_bleeding'];
+    const bleedingValue = Array.isArray(bleeding) ? bleeding[0] : bleeding;
+
+    if (bleedingValue === '1-2') {
+      items.push({
+        title: 'Bleeding Less Than 3 Days',
+        text: 'Short periods can sometimes be linked to low energy intake, stress, poor sleep, or changes in body weight. Supporting your body with nourishing meals, enough rest, stress care, and steady daily routines may help improve cycle balance and overall well-being.'
+      });
+    }
+
+    if (bleedingValue === '3-4' || bleedingValue === '5-7') {
+      items.push({
+        title: 'Bleeding 3 to 7 Days',
+        text: 'Bleeding that lasts 3 to 7 days is usually a sign of a balanced menstrual cycle. Continuing habits like nourishing meals, gentle movement, good sleep, stress care, and paying attention to cycle changes can help support overall well-being.'
+      });
+    }
+
+    if (bleedingValue === 'more_than_7') {
+      items.push({
+        title: 'Bleeding More Than 7 Days',
+        text: 'Bleeding that lasts longer than 7 days can be tiring for the body and may increase iron needs. Listening to your body, keeping track of your cycle, choosing nourishing foods, resting well, and managing stress can help support balance and overall well-being.'
+      });
+    }
+
+    const skipped = answers?.['skipped_period'];
+    if (skipped === 'yes') {
+      items.push({
+        title: 'Skipped Periods',
+        text: 'Missing a period can sometimes happen when the body is under stress, not getting enough energy, or when hormones are temporarily out of balance. Supporting your body with regular, nourishing meals, adequate sleep, gentle daily movement, and stress care can help encourage more consistent cycle patterns and long-term reproductive well-being.'
+      });
+    }
+
+    const symptoms = Array.isArray(answers?.['period_symptoms'])
+      ? answers?.['period_symptoms']
+      : [];
+
+    const symptomMap = {
+      cramps: {
+        title: 'Menstrual Pain',
+        text: 'Period pain can increase when inflammation and muscle tension are higher in the body. Gentle movement, warm foods or heat therapy, adequate hydration, stress reduction, and consistent sleep can help the body relax and may ease discomfort over time.'
+      },
+      bloating: {
+        title: 'Premenstrual Symptoms (PMS)',
+        text: 'PMS symptoms often reflect how the body responds to hormonal shifts before a period. Supporting stable blood sugar with regular meals, reducing excess salty or sugary foods, getting enough rest, and practicing stress care can help soften these premenstrual changes.'
+      },
+      mood_changes: {
+        title: 'Mood & Emotional Changes',
+        text: 'Mood changes around the cycle can happen when hormone levels interact with stress and sleep patterns. Prioritizing good sleep, balanced meals, gentle movement, and calming daily routines can help support emotional balance throughout the cycle.'
+      },
+      loose_stools: {
+        title: 'Digestive Changes',
+        text: 'Digestive changes near your period are common and are often linked to hormone effects on the gut. Staying well hydrated, eating fiber-rich foods, and maintaining regular meal times can help support smoother digestion during this time.'
+      },
+      constipation: {
+        title: 'Digestive Changes',
+        text: 'Digestive changes near your period are common and are often linked to hormone effects on the gut. Staying well hydrated, eating fiber-rich foods, and maintaining regular meal times can help support smoother digestion during this time.'
+      },
+      fatigue: {
+        title: 'Energy and Sleep Changes',
+        text: 'Feeling more tired or having sleep changes around your period can be a sign that your body is adjusting to hormonal shifts. Supporting consistent sleep routines, nourishing meals, and gentle movement can help stabilize energy levels and improve rest across the cycle.'
+      },
+      sleep_trouble: {
+        title: 'Energy and Sleep Changes',
+        text: 'Feeling more tired or having sleep changes around your period can be a sign that your body is adjusting to hormonal shifts. Supporting consistent sleep routines, nourishing meals, and gentle movement can help stabilize energy levels and improve rest across the cycle.'
+      }
+    };
+
+    const seen = new Set();
+    symptoms.forEach((key) => {
+      const item = symptomMap[key];
+      if (item && !seen.has(item.title)) {
+        seen.add(item.title);
+        items.push(item);
+      }
+    });
+  }
+
+  // SECTION 2: BMI and waist circumference
+  if (section?.id === 2) {
+    const bmi = parseFloat(answers?.BMI);
+    const waistIn = parseFloat(answers?.['Waist(inch)']);
+    const waistCm = Number.isFinite(waistIn) ? waistIn * 2.54 : null;
+
+    if (Number.isFinite(bmi)) {
+      if (bmi >= 35) {
+        items.push({
+          title: 'Severe Obese',
+          text: 'This range can place added strain on the body’s energy and hormone systems. Small, compassionate steps—like regular nourishing meals, light daily movement, improved sleep routines, and stress support—can make meaningful differences in supporting metabolic and reproductive well-being.'
+        });
+      } else if (bmi > 30) {
+        items.push({
+          title: 'Obese',
+          text: 'This range may increase the body’s workload in managing energy and hormone signals. Gentle, sustainable lifestyle changes—such as consistent meals, gradual increases in physical activity, stress care, and quality rest—can help support metabolic health and hormonal balance over time.'
+        });
+      } else if (bmi >= 25) {
+        items.push({
+          title: 'Overweight',
+          text: 'Being in this range can sometimes be linked to changes in how the body handles energy and hormones. Supporting steady blood sugar through balanced meals, regular movement, stress reduction, and good sleep can help improve metabolic balance and support long-term hormonal health.'
+        });
+      } else if (bmi >= 18.5) {
+        items.push({
+          title: 'Normal',
+          text: 'A weight range within this category often supports balanced energy use and hormone function. Continuing healthy habits like regular meals, consistent movement, quality sleep, and stress care can help maintain metabolic and reproductive well-being over time.'
+        });
+      } else {
+        items.push({
+          title: 'Underweight',
+          text: 'Being underweight can sometimes mean the body isn’t getting enough energy or nutrients to support regular hormone and cycle function. Focusing on nourishing meals, regular eating times, adequate protein, good sleep, and gentle movement can help support energy balance and reproductive health.'
+        });
+      }
+    }
+
+    if (Number.isFinite(waistCm) && waistCm > 88) {
+      items.push({
+        title: 'Waist Circumference High',
+        text: 'Waist circumference reflects how the body stores fat around the midsection, which is closely linked to metabolic and hormonal health. When measurements are higher than normal, supporting core health through regular movement (especially strength and walking), balanced meals that support blood sugar, stress regulation, quality sleep, and daily activity helps promote long-term wellness.'
+      });
+    }
+  }
+
+  // SECTION 3: Energy crashes after meals
+  if (section?.id === 3) {
+    const values = Array.isArray(answers?.['energy_hunger_signals'])
+      ? answers?.['energy_hunger_signals']
+      : [];
+
+    if (values.includes('tired_after_meals')) {
+      items.push({
+        title: 'Energy Crashes After Meals',
+        text: 'Feeling very tired after eating can be a sign that your body is having trouble keeping energy levels steady. Supporting balanced meals with protein, fiber, and healthy fats, eating at regular times, gentle daily movement, and good sleep can help your body use energy more smoothly and support long-term hormone balance.'
+      });
+    }
+
+    if (values.includes('sweet_cravings')) {
+      items.push({
+        title: 'Sugar Cravings',
+        text: 'Frequent sugar cravings often happen when blood sugar levels rise and fall quickly. Eating regular meals, including protein at each meal, choosing whole foods more often, and managing stress can help reduce cravings and support healthier energy and hormone balance over time.'
+      });
+    }
+
+    if (values.includes('hungry_after_eating')) {
+      items.push({
+        title: 'Feeling Hungry Soon After Eating',
+        text: 'Getting hungry shortly after meals may mean your body needs more steady nourishment. Adding protein, fiber, and healthy fats to meals, slowing down while eating, and avoiding skipped meals can help you feel fuller longer and support metabolic and hormonal health.'
+      });
+    }
+  }
+
+  // SECTION 4: Skin & hair
+  if (section?.id === 4) {
+    if (answers?.['Pimples(Y/N)'] === true) {
+      items.push({
+        title: 'Persistent Acne',
+        text: 'Ongoing acne can happen when oil production and skin turnover are being influenced by hormone shifts. Keeping blood sugar steady by eating regular meals, reducing frequent sugary snacks, managing stress, and getting enough sleep can help calm oil activity and support clearer skin over time.'
+      });
+    }
+
+    if (answers?.['Hair loss(Y/N)'] === true) {
+      items.push({
+        title: 'Scalp Hair Thinning',
+        text: 'Hair thinning often reflects how the body is prioritizing nutrients during times of stress or low energy availability. Eating enough protein, avoiding skipped meals, supporting iron-rich and whole foods, and prioritizing rest can help the body redirect nutrients toward healthier hair growth.'
+      });
+    }
+
+    if (answers?.['hair growth(Y/N)'] === true) {
+      items.push({
+        title: 'Excess Hair Growth',
+        text: 'Excess hair growth can be linked to increased sensitivity to certain hormones. Supporting steady energy levels through balanced meals, regular movement, and stress reduction can help the body regulate hormone signals more smoothly and support healthier hair patterns over time.'
+      });
+    }
+  }
+
+  // SECTION 5: Daily lifestyle
+  if (section?.id === 5) {
+    const activity = answers?.['physical_activity_level'];
+    if (activity === 'sedentary') {
+      items.push({
+        title: 'Sedentary',
+        text: 'Spending most of the day sitting can make it harder for the body to use energy efficiently, which may affect hormone balance over time. Even small amounts of daily movement—like short walks, stretching, or light household activity—can help improve energy use and support metabolic and reproductive health.'
+      });
+    }
+
+    if (activity === 'light') {
+      items.push({
+        title: 'Light',
+        text: 'Light movement is a great foundation for health. To further support hormone balance, adding a bit more consistency—such as daily walks, gentle strength exercises, or longer movement sessions—can help the body manage energy, support insulin balance, and promote overall well-being.'
+      });
+    }
+
+    if (activity === 'active') {
+      items.push({
+        title: 'Active',
+        text: 'Regular physical activity strongly supports hormone balance, energy regulation, and long-term reproductive health. Continuing a mix of movement, strength, and recovery—along with adequate rest and nutrition—helps maintain these benefits and protects against burnout.'
+      });
+    }
+
+    const sleep = answers?.['sleep_duration'];
+    if (sleep === 'very_short') {
+      items.push({
+        title: 'Very Short Sleep',
+        text: 'Sleeping very little on a regular basis can place stress on the body and make it harder to regulate energy and hormones. Prioritizing longer, more consistent sleep—along with calming bedtime routines and regular meal times—can help support hormone balance and protect long-term reproductive health.'
+      });
+    }
+
+    if (sleep === 'short') {
+      items.push({
+        title: 'Short Sleep',
+        text: 'Regularly getting short sleep can affect how the body manages blood sugar, appetite, and stress hormones. Gradually increasing sleep time, keeping a steady sleep schedule, and limiting late-night stimulation can help improve energy balance and support hormonal well-being over time.'
+      });
+    }
+
+    if (sleep === 'normal') {
+      items.push({
+        title: 'Normal Sleep',
+        text: 'This amount of sleep generally supports healthy energy use and hormone regulation. Maintaining consistent sleep and wake times, along with balanced nutrition and daily movement, helps protect metabolic and reproductive health.'
+      });
+    }
+
+    if (sleep === 'long') {
+      items.push({
+        title: 'Long Sleep',
+        text: 'Sleeping longer than usual is not always a problem, but when it happens often, it can sometimes reflect low energy, poor sleep quality, or underlying stress. Supporting daytime movement, regular meal timing, and good sleep quality can help improve overall energy and hormonal balance.'
+      });
+    }
+
+    const stress = answers?.['stress_level'];
+    if (stress === 'low') {
+      items.push({
+        title: 'Low Stress',
+        text: 'Low stress levels help keep the body’s stress hormones and reproductive hormones working in balance. Continuing supportive habits like regular sleep, nourishing meals, gentle movement, and daily moments of calm can help maintain long-term hormonal and overall well-being.'
+      });
+    }
+
+    if (stress === 'moderate') {
+      items.push({
+        title: 'Moderate Stress',
+        text: 'Moderate stress can cause temporary shifts in hormones, especially during busy or demanding periods of life. Supporting yourself with consistent routines, balanced meals, regular movement, and simple stress-relief practices can help the body recover and maintain hormonal balance.'
+      });
+    }
+
+    if (stress === 'high') {
+      items.push({
+        title: 'High Stress',
+        text: 'High stress over time can strain the body’s stress response system and affect how hormones and energy are regulated. Prioritizing stress care—such as improving sleep, creating regular meal times, gentle daily movement, and intentional relaxation—can help reduce strain on the body and support healthier hormonal patterns.'
+      });
+    }
+  }
+
+  // SECTION 6: Eating habits
+  if (section?.id === 6) {
+    const mealPattern = answers?.['meal_pattern'];
+    if (mealPattern === '3meals') {
+      items.push({
+        title: 'Regular Meal Timing',
+        text: 'Eating meals at regular times helps the body know when to release energy and hormones. This pattern supports stable blood sugar and metabolic balance, which helps protect long-term hormonal and reproductive health.'
+      });
+    }
+
+    if (mealPattern === 'small_snacks') {
+      items.push({
+        title: 'Frequent Small Meals',
+        text: 'Eating smaller meals or snacks throughout the day can work well when meals are balanced and planned. Including protein, fiber, and healthy fats helps prevent energy dips and supports steady hormone signals.'
+      });
+    }
+
+    if (mealPattern === 'irregular') {
+      items.push({
+        title: 'Irregular Meals',
+        text: 'Skipping meals or eating at unpredictable times can stress the body and make it harder to regulate energy and hormones. Creating more consistent meal times—even gradually—can help support metabolic stability and healthier hormone patterns.'
+      });
+    }
+
+    const sugary = answers?.['sugary_intake'];
+    if (sugary === 'low') {
+      items.push({
+        title: 'Low Sugary Food or Drink Intake',
+        text: 'Keeping sugary drinks to a low level helps the body maintain steady energy and healthy hormone signals. Continuing this habit supports metabolic balance and helps protect long-term reproductive and hormonal well-being.'
+      });
+    }
+
+    if (sugary === 'moderate') {
+      items.push({
+        title: 'Moderate Sugary Food or Drink Intake',
+        text: 'Having sugary drinks sometimes may be okay on its own, but when combined with other factors like stress, irregular meals, or poor sleep, it can affect energy and hormone balance. Pairing sweet drinks with meals and choosing water or unsweetened options more often can help reduce their impact.'
+      });
+    }
+
+    if (sugary === 'high') {
+      items.push({
+        title: 'High Sugary Food or Drink Intake',
+        text: 'Frequent sugary drinks can cause repeated spikes in blood sugar, which may strain the body’s ability to regulate energy and hormones over time. Gradually reducing sugary drinks and replacing them with water, herbal teas, or unsweetened options can strongly support metabolic and hormonal health.'
+      });
+    }
+  }
+
+  return items;
+};
+
+
+
+// NEW - SHOW SUMMARY OF ANSWERS AFTER EACH
+const getReadableAnswer = (question, value) => {
+  if (value === undefined || value === null || value === '') return '';
+
+  if (question?.type === 'toggle') {
+    return value === true ? 'Yes' : 'No';
+  }
+
+  if (question?.type === 'date') {
+    return value;
+  }
+
+  if (question?.type === 'checkbox') {
+    const values = Array.isArray(value) ? value : [value];
+    return values
+      .map(v => question?.options?.find(opt => opt?.value === v)?.label || v)
+      .join(', ');
+  }
+
+  if (question?.type === 'radio' || question?.type === 'select') {
+    return question?.options?.find(opt => opt?.value === value)?.label || value;
+  }
+
+  return String(value);
+};
+
+const buildSectionSummary = (section, answers) => {
+  return section?.questions
+    ?.map((question) => {
+      const value = answers?.[question?.id];
+      if (value === undefined || value === null || value === '') return null;
+
+      return {
+        id: question?.id,
+        label: question?.label,
+        value: getReadableAnswer(question, value)
+      };
+    })
+    .filter(Boolean);
+};
+
+// NEW - PROFESSIONAL GUIDANCE BASED ON KEY ANSWERS (NEW UPDATE)
+const getProfessionalSectionGuidance = (section, answers) => {
+  const items = [];
+  const phase = answers?.cycle_phase;
+
+  if (section?.id === 1) {
+    // Age / LMP section usually has no static guidance unless you want a note for LMP
+    return items;
+  }
+
+  if (section?.id === 2) {
+    const fsh = parseFloat(answers?.['FSH(mIU/mL)']);
+    const lh = parseFloat(answers?.['LH(mIU/mL)']);
+
+    // HOMA-IR
+    const insulin = parseFloat(answers?.['Fasting Insulin (µIU/mL)']);
+    const glucose = parseFloat(answers?.['Fasting Plasma Glucose (mg/dL)']);
+    const homaIr = Number.isFinite(insulin) && Number.isFinite(glucose)
+      ? (insulin * glucose) / 405
+      : null;
+
+    if (Number.isFinite(fsh)) {
+      items.push({
+        title: 'FSH Levels',
+        text: getFSHStaticText(fsh, phase)
+      });
+    }
+
+    if (Number.isFinite(lh)) {
+      items.push({
+        title: 'LH Levels',
+        text: getLHStaticText(lh, phase)
+      });
+    }
+
+    const testosterone = parseFloat(answers?.['Total Testosterone (ng/dL)']);
+    if (Number.isFinite(testosterone)) {
+      items.push({
+        title: 'Total Testosterone',
+        text: getAndrogenStaticText('testosterone', testosterone)
+      });
+    }
+
+    const androstenedione = parseFloat(answers?.['Androstenedione (ng/dL)']);
+    if (Number.isFinite(androstenedione)) {
+      items.push({
+        title: 'Androstenedione',
+        text: getAndrogenStaticText('androstenedione', androstenedione)
+      });
+    }
+
+    const shbg = parseFloat(answers?.['SHBG (nmol/L)']);
+    if (Number.isFinite(shbg)) {
+      items.push({
+        title: 'SHBG',
+        text: getSHBGStaticText(shbg)
+      });
+    }
+
+    const dheas = parseFloat(answers?.['DHEAS (µg/dL)']);
+    if (Number.isFinite(dheas)) {
+      items.push({
+        title: 'DHEA-S',
+        text: getDHEASStaticText(dheas)
+      });
+    }
+
+    const fastingInsulin = parseFloat(answers?.['Fasting Insulin (µIU/mL)']);
+    if (Number.isFinite(fastingInsulin)) {
+      items.push({
+        title: 'Fasting Insulin',
+        text: getInsulinStaticText(fastingInsulin)
+      });
+    }
+
+    const fastingGlucose = parseFloat(answers?.['Fasting Plasma Glucose (mg/dL)']);
+    if (Number.isFinite(fastingGlucose)) {
+      items.push({
+        title: 'Fasting Plasma Glucose',
+        text: getGlucoseStaticText(fastingGlucose)
+      });
+    }
+
+    if (Number.isFinite(homaIr)) {
+      items.push({
+        title: 'HOMA-IR',
+        text: getHomaIrStaticText(homaIr)
+      });
+    }
+
+    const estradiol = parseFloat(answers?.['Estradiol (pg/mL)']);
+    if (Number.isFinite(estradiol)) {
+      items.push({
+        title: 'Estradiol',
+        text: getEstradiolStaticText(estradiol, phase)
+      });
+    }
+
+    const progesterone = parseFloat(answers?.['PRG(ng/mL)']);
+    if (Number.isFinite(progesterone)) {
+      items.push({
+        title: 'Progesterone',
+        text: getProgesteroneStaticText(progesterone, phase)
+      });
+    }
+  }
+
+  if (section?.id === 3) {
+    const bmi = parseFloat(answers?.BMI);
+    const waist = parseFloat(answers?.['Waist(Cm)']);
+    const activity = answers?.['physical_activity_level'];
+    const sleep = answers?.['sleep_duration'];
+    const stress = answers?.['stress_level'];
+    const mealPattern = answers?.['meal_pattern'];
+    const sugary = answers?.['sugary_intake'];
+
+    if (Number.isFinite(bmi)) {
+      items.push({ title: 'BMI', text: getBmiStaticText(bmi) });
+    }
+
+    if (Number.isFinite(waist)) {
+      items.push({ title: 'Waist Circumference', text: getWaistStaticText(waist) });
+    }
+
+    if (activity) {
+      items.push({ title: 'Level of Physical Activity', text: getActivityStaticText(activity) });
+    }
+
+    if (sleep) {
+      items.push({ title: 'Sleep Duration', text: getSleepStaticText(sleep) });
+    }
+
+    if (stress) {
+      items.push({ title: 'Stress Perception', text: getStressStaticText(stress) });
+    }
+
+    if (mealPattern) {
+      items.push({ title: 'Eating Habits', text: getMealPatternStaticText(mealPattern) });
+    }
+
+    if (sugary) {
+      items.push({ title: 'Sugary Food or Drink Intake', text: getSugaryStaticText(sugary) });
+    }
+  }
+
+  return items;
+};
+
+// QUIZ PAGE COMPONENT ------------------------------------------------------------------------>
 const QuizPage = () => {
   const location = useLocation();
   const quizType = location?.state?.quizType || 'general';
@@ -147,6 +756,18 @@ const QuizPage = () => {
   const [error, setError] = useState(null);
   const [showPartialWarning, setShowPartialWarning] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+
+  const [sectionResults, setSectionResults] = useState(null);
+  const [showSectionResultModal, setShowSectionResultModal] = useState(false);
+
+  const [renderSectionResultModal, setRenderSectionResultModal] = useState(false);
+  const [renderResultModal, setRenderResultModal] = useState(false);
+
+  const [isSectionTransitioning, setIsSectionTransitioning] = useState(false);
+
+  const handleBackToDashboard = () => {
+    window.location.href = '/pcos-care-dashboard';
+  };
 
   // Auto-calculate BMI when weight and height change
   useEffect(() => {
@@ -177,8 +798,31 @@ const QuizPage = () => {
     }
   }, [answers?.['Waist(inch)'], answers?.['Hip(inch)']]);
 
+  // Handle showing/hiding Section Result modals with smooth transitions
+  useEffect(() => {
+    if (showSectionResultModal) {
+      setRenderSectionResultModal(true);
+      return;
+    }
+
+    const t = setTimeout(() => setRenderSectionResultModal(false), 220);
+    return () => clearTimeout(t);
+  }, [showSectionResultModal]);
+
+  // Handle showing/hiding Final Result modal with smooth transitions
+  useEffect(() => {
+    if (showResultModal) {
+      setRenderResultModal(true);
+      return;
+    }
+
+    const t = setTimeout(() => setRenderResultModal(false), 220);
+    return () => clearTimeout(t);
+  }, [showResultModal]);
+
   // Quiz sections - reorganized to group related inputs
   const quizSections = quizType === 'general' ? [
+    // GENERAL/USER-FRIENDLY QUIZ SECTIONS (MORE EXPLANATORY, FOR USERS)
     {
       id: 1,
       title: '🌸 Period & Cycle Tracking',
@@ -214,15 +858,17 @@ const QuizPage = () => {
           required: false
         },
         {
-          id: 'Cycle length(days)',
-          type: 'number',
-          label: 'How many days is your usual menstrual cycle?',
-          placeholder: 'Enter number of days between periods',
-          min: 15,
-          max: 60,
-          step: 1,
+          id: 'days_of_bleeding',
+          type: 'checkbox',
+          label: 'How many days does your period usually last?',
+          options: [
+            { value: '1-2', label: '1–2 days' },
+            { value: '3-4', label: '3–4 days' },
+            { value: '5-7', label: '5–7 days' },
+            { value: 'more_than_7', label: 'More than 7 days' }
+          ],
           required: false,
-          helpText: 'This means days between periods, not how long bleeding lasts'
+          singleSelect: true
         },
         {
           id: 'skipped_period',
@@ -362,24 +1008,25 @@ const QuizPage = () => {
       description: 'Tell us about your daily activity, sleep, and stress',
       questions: [
         {
-          id: 'Reg.Exercise(Y/N)',
+          id: 'physical_activity_level',
           type: 'radio',
           label: 'How active are you most days?',
           options: [
-            { value: 'N', label: 'No regular exercise' },
-            { value: 'Y', label: 'Regular exercise' }
+            { value: 'sedentary', label: 'Mostly sitting or little movement' },
+            { value: 'light', label: 'Light activity (walking, light exercise)' },
+            { value: 'active', label: 'Regular exercise or active lifestyle' }
           ],
           required: false
         },
         {
-          id: 'sleep_hours',
+          id: 'sleep_duration',
           type: 'radio',
           label: 'How much do you usually sleep per night?',
           options: [
-            { value: 'less5', label: 'Less than 5 hours' },
-            { value: '5to6', label: '5–6 hours' },
-            { value: '7to9', label: '7–9 hours' },
-            { value: 'more9', label: 'More than 9 hours' }
+            { value: 'very_short', label: 'Less than 5 hours' },
+            { value: 'short', label: '5–6 hours' },
+            { value: 'normal', label: '7–9 hours' },
+            { value: 'long', label: 'More than 9 hours' }
           ],
           required: false
         },
@@ -393,7 +1040,7 @@ const QuizPage = () => {
             { value: 'high', label: 'High' }
           ],
           required: false
-        }
+        },
       ]
     },
     {
@@ -413,12 +1060,13 @@ const QuizPage = () => {
           required: false
         },
         {
-          id: 'Fast food (Y/N)',
+          id: 'sugary_intake',
           type: 'radio',
-          label: 'How often do you eat or drink sugary foods (desserts, sweet drinks)?',
+          label: 'How often do you have sugary foods or drinks?',
           options: [
-            { value: 'N', label: 'Rarely' },
-            { value: 'Y', label: 'Often' }
+            { value: 'low', label: 'Low' },
+            { value: 'moderate', label: 'Moderate' },
+            { value: 'high', label: 'High' }
           ],
           required: false
         }
@@ -446,6 +1094,7 @@ const QuizPage = () => {
       ]
     }
   ] : [
+    // PROFFESSIONAL/CLINICAL QUIZ SECTIONS (MORE TECHNICAL, FOR PROVIDERS)
     {
       id: 1,
       title: 'Client Details',
@@ -657,6 +1306,18 @@ const QuizPage = () => {
           step: 0.001,
           required: false,
           autoCalculated: true
+        },
+        {
+          id: 'cycle_phase',
+          type: 'select',
+          label: 'Cycle / Menopausal Phase',
+          options: [
+            { value: 'follicular', label: 'Adult Females - Follicular Phase' },
+            { value: 'ovulatory', label: 'Adult Females - Ovulatory Peak' },
+            { value: 'luteal', label: 'Adult Females - Luteal Phase' },
+            { value: 'postmenopausal', label: 'Post-Menopausal Females' }
+          ],
+          required: false
         }
       ]
     }
@@ -844,16 +1505,25 @@ const QuizPage = () => {
     return Object.keys(errors)?.length === 0;
   };
 
-  // Submission orchestration
+  // Submission orchestration (UPDATED - Static Answers)
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
     setResults(null);
 
     try {
+      if (quizType === 'general') {
+        const staticAnswers = buildGeneralStaticAnswers(answers);
+
+        setResults({
+          general: staticAnswers
+        });
+        setShowResultModal(true);
+        return;
+      }
+
       let imageResult = null;
 
-      // Step 1: Upload image if professional quiz and images exist
       if (quizType === 'professional' && uploadedImages?.length > 0) {
         const mostRecentImage = uploadedImages?.[uploadedImages?.length - 1];
 
@@ -862,15 +1532,10 @@ const QuizPage = () => {
 
         if (imgResponse?.ok) {
           imageResult = imgResponse?.result;
-          console.log('Image prediction result:', imageResult);
-        } else {
-          // Image failed but continue with tabular
-          console.warn('Image prediction failed:', imgResponse?.error);
         }
       }
 
-      // Step 2: Submit tabular data
-      const modelPayload = mapAnswersToModel(answers);
+      const modelPayload = mapAnswersToModel(answers, quizType);
       console.log('Submitting tabular data to /predict-pcos:', modelPayload);
 
       const tabularResponse = await predictTabular(modelPayload);
@@ -879,17 +1544,8 @@ const QuizPage = () => {
         throw new Error(tabularResponse?.error || 'Prediction failed');
       }
 
-      const tabularResult = {
-        ...tabularResponse?.result,
-        completenessLevel: modelPayload?.completenessLevel,
-        filledCount: modelPayload?.filledCount,
-        missingFields: modelPayload?.missingFields
-      };
-      console.log('Tabular prediction result:', tabularResult);
-
-      // Step 3: Display results (even if image failed, show tabular result)
       setResults({
-        tabular: tabularResult,
+        tabular: tabularResponse?.result,
         image: imageResult
       });
       setShowResultModal(true);
@@ -917,33 +1573,46 @@ const QuizPage = () => {
   };
 
   const handleNext = () => {
-    // Validate current section
-    if (!validateCurrentSection()) {
+    if (!validateCurrentSection()) return;
+
+    // General quiz: show section result first, do NOT advance yet
+    if (quizType === 'general') {
+      const sectionSummary = buildSectionSummary(currentSectionData, answers);
+      const guidance = getGeneralSectionGuidance(currentSectionData, answers);
+
+      // If there is nothing to show, move on immediately
+      if (sectionSummary.length === 0 && guidance.length === 0) {
+        if (currentSection < quizSections?.length - 1) {
+          setCurrentSection(prev => prev + 1);
+          setShowPartialWarning(false);
+        } else {
+          handleBackToDashboard();
+        }
+        return;
+      }
+
+      setSectionResults({
+        sectionTitle: currentSectionData?.title,
+        answers: sectionSummary,
+        guidance
+      });
+      setShowSectionResultModal(true);
       return;
     }
 
-    // Check if we're on the last section
+    // Professional quiz logic
     const isLastSection = currentSection === quizSections?.length - 1;
 
     if (isLastSection) {
-      const modelPayload = mapAnswersToModel(answers);
-
-      if (!modelPayload["Age (yrs)"]) {
-        setError("Age is required before submission.");
-        setShowResultModal(true);
-        return;
-      }
-
-      if (modelPayload.completenessLevel !== 'confident' && !showPartialWarning) {
+      const modelPayload = mapAnswersToModel(answers, quizType);
+      if (modelPayload?.partial_input && !showPartialWarning) {
         setShowPartialWarning(true);
         return;
       }
-
       handleSubmit();
       return;
     }
 
-    // Navigate to next section
     setCurrentSection(prev => prev + 1);
     setShowPartialWarning(false);
   };
@@ -953,6 +1622,24 @@ const QuizPage = () => {
       setCurrentSection(prev => prev - 1);
     }
     setShowPartialWarning(false); // Reset warning when navigating back
+  };
+
+  // Handle "Continue" after showing section results in General Quiz (NEW)
+  const handleContinueFromSectionResult = () => {
+    setIsSectionTransitioning(true);
+
+    setTimeout(() => {
+      setShowSectionResultModal(false);
+      setSectionResults(null);
+
+      if (currentSection < quizSections?.length - 1) {
+        setCurrentSection(prev => prev + 1);
+      } else {
+        handleBackToDashboard();
+      }
+
+      setIsSectionTransitioning(false);
+    }, 200);
   };
 
   const isFirstSection = currentSection === 0;
@@ -1075,6 +1762,11 @@ const QuizPage = () => {
                     value={option?.value}
                     checked={selected}
                     onChange={() => {
+                      if (question?.singleSelect) {
+                        handleAnswer(question?.id, selected ? [] : [option?.value]);
+                        return;
+                      }
+
                       const current = Array.isArray(value) ? [...value] : [];
                       if (option?.value === 'none') {
                         handleAnswer(question?.id, selected ? [] : ['none']);
@@ -1180,7 +1872,7 @@ const QuizPage = () => {
         />
         <BackButton isSidebarOpen={isSidebarOpen} />
         <main className="min-h-screen bg-background smooth-scroll ml-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 lg:pt-20 ">
             {/* Header */}
             <header className="text-center mb-8 md:mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
@@ -1231,8 +1923,112 @@ const QuizPage = () => {
                         onClick={handleSubmit}
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? 'Submitting...' : 'Proceed Anyway'}
+                        {isSubmitting ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                            Submitting...
+                          </span>
+                        ) : (
+                          'Proceed Anyway'
+                        )}
                       </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Section Result Modal */}
+            {renderSectionResultModal && sectionResults && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-background rounded-2xl shadow-2xl max-w-3xl lg:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="p-6 md:p-8">
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <h3 className="font-heading font-bold text-2xl text-foreground">
+                          Section Summary
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {sectionResults?.sectionTitle}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowSectionResultModal(false)}
+                        className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-default"
+                        aria-label="Close modal"
+                      >
+                        <Icon name="X" size={20} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-6 mb-6">
+                      <div className="p-5 rounded-xl bg-muted/30 border border-border">
+                        <h4 className="font-semibold text-foreground mb-3">Your Answers</h4>
+                        <div className="space-y-3">
+                          {sectionResults?.answers?.map((item) => (
+                            <div key={item.id} className="flex justify-between gap-4">
+                              <span className="text-sm text-muted-foreground">{item.label}</span>
+                              <span className="text-sm font-medium text-foreground text-right">
+                                {item.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {sectionResults?.guidance?.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-foreground">Health Prompts :</h4>
+                          {sectionResults.guidance.map((item, index) => (
+                            <div
+                              key={index}
+                              className="p-5 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20"
+                            >
+                              <h5 className="font-semibold text-foreground mb-2">{item.title}</h5>
+                              <p className="text-sm text-muted-foreground leading-6">{item.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t bg-background p-4 md:p-6 sticky bottom-0">
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => setShowSectionResultModal(false)}
+                          className="flex-1"
+                        >
+                          Stay Here
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={handleBackToDashboard}
+                          className="flex-1"
+                          iconName="Home"
+                          iconPosition="left"
+                        >
+                          Back to Dashboard
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="lg"
+                          onClick={handleContinueFromSectionResult}
+                          className="flex-1"
+                          disabled={isSectionTransitioning}
+                        >
+                          {isSectionTransitioning ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                              Loading...
+                            </span>
+                          ) : (
+                            'Continue'
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1242,7 +2038,7 @@ const QuizPage = () => {
             {/* Result Modal */}
             {showResultModal && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-background rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-background rounded-2xl shadow-2xl max-w-3xl lg:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                   <div className="p-6 md:p-8">
                     {/* Modal Header */}
                     <div className="flex items-start justify-between mb-6">
@@ -1259,10 +2055,10 @@ const QuizPage = () => {
                         </div>
                         <div>
                           <h3 className="font-heading font-bold text-2xl text-foreground">
-                            {error ? 'Submission Failed' : 'Assessment Complete'}
+                            {error ? 'Submission Failed' : quizType === 'general' ? 'Guidance Ready' : 'Assessment Complete'}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {error ? 'An error occurred during submission' : 'Your results are ready'}
+                            {error ? 'An error occurred during submission' : quizType === 'general' ? 'Your static guidance is ready' : 'Your results are ready'}
                           </p>
                         </div>
                       </div>
@@ -1577,7 +2373,14 @@ const QuizPage = () => {
                     className="flex-1 max-w-xs"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Submitting...' : (isLastSection ? 'Complete' : 'Next')}
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        {isLastSection ? 'Submitting...' : 'Next'}
+                      </span>
+                    ) : (
+                      isLastSection ? 'Complete' : 'Next'
+                    )}
                   </Button>
                 </div>
 
