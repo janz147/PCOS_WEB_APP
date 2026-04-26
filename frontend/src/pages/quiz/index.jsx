@@ -1740,7 +1740,7 @@ const QuizPage = () => {
           type: 'number',
           label: 'Age of Client',
           placeholder: 'Enter age',
-          unit: 'years',
+          unit: 'y/o',
           min: 10,
           max: 80,
           step: 1,

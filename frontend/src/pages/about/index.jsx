@@ -11,6 +11,13 @@ import BackButton from '../../components/ui/BackButton';
 import Footer from '../../components/ui/Footer';
 import RatingSurveyModal from '../../components/ui/RatingSurveyModal';
 
+import DarleneImg from './img/Darlene Gaia Loma.jpg';
+import KatherineImg from './img/Katherine Anne Jacob.jpg';
+import LyraImg from './img/Lyra Margarette Go.jpg';
+import MarimelImg from './img/Marimel Narvaez.jpg';
+import XelenajImg from './img/Xelenaj Bethaida Gonzales.jpg';
+import ZhinnyImg from './img/Zhinny Ren Lao.jpg';
+
 const AboutPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showRatingSurvey, setShowRatingSurvey] = useState(false);
@@ -63,36 +70,53 @@ const AboutPage = () => {
     {
       id: 1,
       name: 'Darlene Gaia Loma',
-      role: 'Principal Investigator',
+      role: 'Co-Researcher',
       department: 'College of Nursing',
-      imageUrl: '',
-      imageAlt: 'Lead researcher, principal investigator in nursing research study on PCOS',
+      imageUrl: DarleneImg,
+      imageAlt: 'Nursing Student, Co-researcher',
     },
     {
       id: 2,
-      name: 'Co-Researcher',
-      role: 'Research Associate',
-      department: 'Health Informatics',
-      imageUrl: '',
-      imageAlt: 'Co-researcher in health informatics',
+      name: 'Katherine Anne Jacob',
+      role: 'Co-Researcher',
+      department: 'College of Nursing',
+      imageUrl: KatherineImg,
+      imageAlt: 'Nursing Student, Co-researcher',
     },
     {
       id: 3,
-      name: 'Co-Researcher',
-      role: 'Faculty Adviser',
+      name: 'Xelenaj Bethaida Gonzales',
+      role: 'Co-Researcher',
       department: 'College of Nursing',
-      imageUrl: '',
-      imageAlt: 'Faculty adviser for PCOS research study',
+      imageUrl: XelenajImg,
+      imageAlt: 'Nursing Student, Co-researcher',
     },
     {
       id: 4,
-      name: 'Statistical Consultant',
-      role: 'Data Analyst',
-      department: 'Research & Statistics',
-      imageUrl: '',
-      imageAlt: 'Statistical consultant and data analyst for PCOS research study',
+      name: 'Lyra Margarette Go',
+      role: 'Co-Researcher',
+      department: 'College of Nursing',
+      imageUrl: LyraImg,
+      imageAlt: 'Nursing Student, Co-researcher',
+    },
+    {
+      id: 5,
+      name: 'Zhinny Ren Lao',
+      role: 'Co-Researcher',
+      department: 'College of Nursing',
+      imageUrl: ZhinnyImg,
+      imageAlt: 'Nursing Student, Co-researcher',
     },
   ];
+
+  const researchAdviser = {
+    id: 6,
+    name: 'Marimel Narvaez, RN, MAN',
+    role: 'Research Adviser',
+    department: 'College of Nursing',
+    imageUrl: MarimelImg,
+    imageAlt: 'Research adviser for the Research Study',
+  };
 
   return (
     <>
@@ -212,16 +236,16 @@ const AboutPage = () => {
           </section>
 
           <section className="mb-16 md:mb-20" id="researchers">
-            <div className="text-center mb-8 md:mb-10 px-4">
+            <div className="text-center mb-12 md:mb-14 px-4">
               <h2 className="font-heading font-semibold text-2xl md:text-3xl text-foreground mb-2">
-                About the Study &amp; Researchers
+                About the Study
               </h2>
               <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
                 This application is developed as part of an academic research initiative aimed at promoting early PCOS risk awareness through machine learning and nursing-oriented health guidance.
               </p>
             </div>
 
-            <div className="card-base max-w-7xl mx-auto mb-8">
+            <div className="card-base max-w-7xl mx-auto mb-12">
               <div className="flex flex-col md:flex-row gap-6 items-start">
                 <div className="flex-shrink-0">
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -255,35 +279,67 @@ const AboutPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 px-4 lg:px-0">
+            <div className="text-center mb-10 px-4 mt-10">
+              <h2 className="font-heading font-semibold text-2xl md:text-3xl text-foreground mb-2">
+                Meet the Researchers
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
+                The team behind the development of the CystSense application and research study.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-10 px-4 lg:px-0">
               {researchers?.map((member) => (
                 <div
                   key={member?.id}
-                  className="card-base transition-all duration-300 hover:shadow-coral-lg hover:-translate-y-1 text-center"
+                  className="group w-full sm:w-[320px] lg:w-[340px] text-center p-6 transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2"
                 >
-                  <div className="relative w-28 h-28 mx-auto mb-4 rounded-full overflow-hidden bg-primary/10">
+                  <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden bg-transparent transition-transform duration-300 ease-out group-hover:scale-110">
                     <Image
                       src={member?.imageUrl}
                       alt={member?.imageAlt}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <h3 className="font-heading font-semibold text-base text-foreground mb-1">
+
+                  <h3 className="font-heading font-semibold text-xl text-foreground mb-2">
                     {member?.name}
                   </h3>
-                  <p className="text-sm text-primary font-medium mb-1">
+                  <p className="text-base text-primary font-medium mb-1">
                     {member?.role}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {member?.department}
                   </p>
                 </div>
               ))}
             </div>
+
+            <div className="mt-10 flex justify-center px-4 lg:px-0">
+              <div className="group w-full sm:w-[340px] lg:w-[360px] text-center p-6 transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2">
+                <div className="relative w-55 h-55 mx-auto mb-6 rounded-full overflow-hidden bg-transparent transition-transform duration-300 ease-out group-hover:scale-110">
+                  <Image
+                    src={researchAdviser?.imageUrl}
+                    alt={researchAdviser?.imageAlt}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <h3 className="font-heading font-semibold text-xl text-foreground mb-2">
+                  {researchAdviser?.name}
+                </h3>
+                <p className="text-base text-primary font-medium mb-1">
+                  {researchAdviser?.role}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {researchAdviser?.department}
+                </p>
+              </div>
+            </div>
           </section>
 
-          <section className="mb-16 md:mb-20">
-            <div className="card-base bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 text-center max-w-2xl mx-auto">
+          <section className="">
+            <div className="card-base bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 text-center  mx-auto">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Icon name="Star" size={28} color="var(--color-primary)" />
               </div>
