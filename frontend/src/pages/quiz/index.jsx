@@ -113,7 +113,7 @@ const buildGeneralStaticAnswers = (answers) => {
   }
 
   const skipped = answers?.['skipped_period'];
-  if (skipped === 'yes') {
+  if (skipped === 'once' || skipped === 'more') {
     items.push({
       title: 'Skipped Periods',
       text: 'Missing a period can sometimes happen when the body is under stress, not getting enough energy, or when hormones are temporarily out of balance. Supporting your body with regular, nourishing meals, adequate sleep, gentle daily movement, and stress care can help encourage more consistent cycle patterns and long-term reproductive well-being.'
@@ -172,7 +172,7 @@ const mapAnswersToModel = (answers) => {
   const toNum = (val) => {
     if (val === '' || val === null || val === undefined) return null;
     const num = parseFloat(val);
-    return isNaN(num) ? null : num;
+    return Number.isNaN(num) ? null : num;
   };
 
   const toYN = (val) => {
@@ -180,6 +180,14 @@ const mapAnswersToModel = (answers) => {
     if (val === false || val === 'N') return 'N';
     return null;
   };
+
+  const cmToIn = (val) => {
+    const num = toNum(val);
+    return num === null ? null : num / 2.54;
+  };
+
+  const waistIn = toNum(answers?.['Waist(inch)']) ?? cmToIn(answers?.['Waist(Cm)']);
+  const hipIn = toNum(answers?.['Hip(inch)']) ?? cmToIn(answers?.['Hip(Cm)']);
 
   const payload = {
     "Age (yrs)": toNum(answers?.["Age (yrs)"]),
@@ -195,9 +203,9 @@ const mapAnswersToModel = (answers) => {
     "FSH(mIU/mL)": toNum(answers?.["FSH(mIU/mL)"]),
     "LH(mIU/mL)": toNum(answers?.["LH(mIU/mL)"]),
     "FSH/LH": toNum(answers?.["FSH/LH"]),
-    "Hip(inch)": toNum(answers?.["Hip(inch)"]),
-    "Waist(inch)": toNum(answers?.["Waist(inch)"]),
-    "Waist:Hip Ratio": toNum(answers?.["Waist:Hip Ratio"]),
+    "Hip(inch)": hipIn,
+    "Waist(inch)": waistIn,
+    "Waist:Hip Ratio": toNum(answers?.["Waist:Hip Ratio"]) ?? (Number.isFinite(waistIn) && Number.isFinite(hipIn) ? waistIn / hipIn : null),
     "TSH (mIU/L)": toNum(answers?.["TSH (mIU/L)"]),
     "PRL(ng/mL)": toNum(answers?.["PRL(ng/mL)"]),
     "Vit D3 (ng/mL)": toNum(answers?.["Vit D3 (ng/mL)"]),
@@ -223,6 +231,7 @@ const mapAnswersToModel = (answers) => {
     ...payload,
     filledCount,
     completenessLevel,
+    partial_input: completenessLevel !== 'confident',
     missingFields: TABULAR_MODEL_FIELDS.filter((field) => {
       const v = payload?.[field];
       return v === null || v === undefined || v === '';
@@ -574,6 +583,10 @@ const getReadableAnswer = (question, value) => {
     return question?.options?.find(opt => opt?.value === value)?.label || value;
   }
 
+  if (question?.type === 'number') {
+    return question?.unit ? `${value} ${question.unit}` : String(value);
+  }
+
   return String(value);
 };
 
@@ -595,106 +608,128 @@ const buildSectionSummary = (section, answers) => {
 // NEW - PROFESSIONAL GUIDANCE BASED ON KEY ANSWERS (NEW UPDATE)
 const getProfessionalSectionGuidance = (section, answers) => {
   const items = [];
-  const phase = answers?.cycle_phase;
+  const phase = getCyclePhaseFromLMP(answers?.LMP);
 
   if (section?.id === 1) {
-    // Age / LMP section usually has no static guidance unless you want a note for LMP
     return items;
   }
 
   if (section?.id === 2) {
     const fsh = parseFloat(answers?.['FSH(mIU/mL)']);
     const lh = parseFloat(answers?.['LH(mIU/mL)']);
-
-    // HOMA-IR
+    const testosterone = parseFloat(answers?.['Total Testosterone (ng/dL)']);
+    const androstenedione = parseFloat(answers?.['Androstenedione (ng/dL)']);
+    const shbg = parseFloat(answers?.['SHBG (nmol/L)']);
+    const dheas = parseFloat(answers?.['DHEAS (µg/dL)']);
     const insulin = parseFloat(answers?.['Fasting Insulin (µIU/mL)']);
     const glucose = parseFloat(answers?.['Fasting Plasma Glucose (mg/dL)']);
     const homaIr = Number.isFinite(insulin) && Number.isFinite(glucose)
       ? (insulin * glucose) / 405
       : null;
+    const estradiol = parseFloat(answers?.['Estradiol (pg/mL)']);
+    const progesterone = parseFloat(answers?.['PRG(ng/mL)']);
 
     if (Number.isFinite(fsh)) {
       items.push({
         title: 'FSH Levels',
-        text: getFSHStaticText(fsh, phase)
+        text: getFSHStaticText(fsh, phase),
+        status: getRangeStatus(
+          fsh,
+          phase === 'follicular' ? 1.4 : phase === 'ovulatory' ? 6.2 : phase === 'luteal' ? 1.1 : 19.3,
+          phase === 'follicular' ? 9.9 : phase === 'ovulatory' ? 17.2 : phase === 'luteal' ? 9.2 : 100.6
+        )
       });
     }
 
     if (Number.isFinite(lh)) {
       items.push({
         title: 'LH Levels',
-        text: getLHStaticText(lh, phase)
+        text: getLHStaticText(lh, phase),
+        status: getRangeStatus(
+          lh,
+          phase === 'follicular' ? 1 : phase === 'ovulatory' ? 20 : phase === 'luteal' ? 0.6 : 15,
+          phase === 'follicular' ? 15 : phase === 'ovulatory' ? 75 : phase === 'luteal' ? 16 : 60
+        )
       });
     }
 
-    const testosterone = parseFloat(answers?.['Total Testosterone (ng/dL)']);
     if (Number.isFinite(testosterone)) {
       items.push({
         title: 'Total Testosterone',
-        text: getAndrogenStaticText('testosterone', testosterone)
+        text: getAndrogenStaticText('testosterone', testosterone),
+        status: getRangeStatus(testosterone, 15, 70)
       });
     }
 
-    const androstenedione = parseFloat(answers?.['Androstenedione (ng/dL)']);
     if (Number.isFinite(androstenedione)) {
       items.push({
         title: 'Androstenedione',
-        text: getAndrogenStaticText('androstenedione', androstenedione)
+        text: getAndrogenStaticText('androstenedione', androstenedione),
+        status: getRangeStatus(androstenedione, 30, 200)
       });
     }
 
-    const shbg = parseFloat(answers?.['SHBG (nmol/L)']);
     if (Number.isFinite(shbg)) {
       items.push({
         title: 'SHBG',
-        text: getSHBGStaticText(shbg)
+        text: getSHBGStaticText(shbg),
+        status: getRangeStatus(shbg, 18, 144)
       });
     }
 
-    const dheas = parseFloat(answers?.['DHEAS (µg/dL)']);
     if (Number.isFinite(dheas)) {
       items.push({
         title: 'DHEA-S',
-        text: getDHEASStaticText(dheas)
+        text: getDHEASStaticText(dheas),
+        status: getRangeStatus(dheas, 35, 430)
       });
     }
 
-    const fastingInsulin = parseFloat(answers?.['Fasting Insulin (µIU/mL)']);
-    if (Number.isFinite(fastingInsulin)) {
+    if (Number.isFinite(insulin)) {
       items.push({
         title: 'Fasting Insulin',
-        text: getInsulinStaticText(fastingInsulin)
+        text: getInsulinStaticText(insulin),
+        status: getRangeStatus(insulin, 2, 20)
       });
     }
 
-    const fastingGlucose = parseFloat(answers?.['Fasting Plasma Glucose (mg/dL)']);
-    if (Number.isFinite(fastingGlucose)) {
+    if (Number.isFinite(glucose)) {
       items.push({
         title: 'Fasting Plasma Glucose',
-        text: getGlucoseStaticText(fastingGlucose)
+        text: getGlucoseStaticText(glucose),
+        status: getRangeStatus(glucose, 70, 99)
       });
     }
 
     if (Number.isFinite(homaIr)) {
       items.push({
         title: 'HOMA-IR',
-        text: getHomaIrStaticText(homaIr)
+        text: getHomaIrStaticText(homaIr),
+        status: getHomaIrStatus(homaIr)
       });
     }
 
-    const estradiol = parseFloat(answers?.['Estradiol (pg/mL)']);
     if (Number.isFinite(estradiol)) {
       items.push({
         title: 'Estradiol',
-        text: getEstradiolStaticText(estradiol, phase)
+        text: getEstradiolStaticText(estradiol, phase),
+        status: getRangeStatus(
+          estradiol,
+          phase === 'follicular' ? 20 : phase === 'ovulatory' ? 200 : phase === 'luteal' ? 60 : 20,
+          phase === 'follicular' ? 50 : phase === 'ovulatory' ? 400 : phase === 'luteal' ? 250 : 30
+        )
       });
     }
 
-    const progesterone = parseFloat(answers?.['PRG(ng/mL)']);
     if (Number.isFinite(progesterone)) {
       items.push({
         title: 'Progesterone',
-        text: getProgesteroneStaticText(progesterone, phase)
+        text: getProgesteroneStaticText(progesterone, phase),
+        status: getRangeStatus(
+          progesterone,
+          phase === 'follicular' ? 0 : phase === 'luteal' ? 2 : 0,
+          phase === 'follicular' ? 1.0 : phase === 'luteal' ? 10 : 1.0
+        )
       });
     }
   }
@@ -709,36 +744,627 @@ const getProfessionalSectionGuidance = (section, answers) => {
     const sugary = answers?.['sugary_intake'];
 
     if (Number.isFinite(bmi)) {
-      items.push({ title: 'BMI', text: getBmiStaticText(bmi) });
+      items.push({
+        title: 'BMI',
+        text: getBmiStaticText(bmi),
+        status: getBmiStatus(bmi)
+      });
     }
 
     if (Number.isFinite(waist)) {
-      items.push({ title: 'Waist Circumference', text: getWaistStaticText(waist) });
+      items.push({
+        title: 'Waist Circumference',
+        text: getWaistStaticText(waist),
+        status: waist > 88 ? 'high' : 'normal'
+      });
     }
 
     if (activity) {
-      items.push({ title: 'Level of Physical Activity', text: getActivityStaticText(activity) });
+      items.push({
+        title: 'Level of Physical Activity',
+        text: getActivityStaticText(activity),
+        status: activity
+      });
     }
 
     if (sleep) {
-      items.push({ title: 'Sleep Duration', text: getSleepStaticText(sleep) });
+      items.push({
+        title: 'Sleep Duration',
+        text: getSleepStaticText(sleep),
+        status: sleep
+      });
     }
 
     if (stress) {
-      items.push({ title: 'Stress Perception', text: getStressStaticText(stress) });
+      items.push({
+        title: 'Stress Perception',
+        text: getStressStaticText(stress),
+        status: stress
+      });
     }
 
     if (mealPattern) {
-      items.push({ title: 'Eating Habits', text: getMealPatternStaticText(mealPattern) });
+      items.push({
+        title: 'Eating Habits',
+        text: getMealPatternStaticText(mealPattern),
+        status: mealPattern
+      });
     }
 
     if (sugary) {
-      items.push({ title: 'Sugary Food or Drink Intake', text: getSugaryStaticText(sugary) });
+      items.push({
+        title: 'Sugary Food or Drink Intake',
+        text: getSugaryStaticText(sugary),
+        status: sugary
+      });
     }
   }
 
   return items;
 };
+
+const getCyclePhaseFromLMP = (lmpDateString) => {
+  if (!lmpDateString) return null;
+
+  // Parse as local date to avoid timezone issues
+  const [year, month, day] = lmpDateString.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  const lmpDate = new Date(year, month - 1, day);
+  if (Number.isNaN(lmpDate.getTime())) return null;
+
+  const today = new Date();
+  const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const cycleDay = Math.floor((todayLocal - lmpDate) / msPerDay) + 1;
+
+  const predictedOvulationDay = 28 - 14; // constant cycle length = 28
+  const follicularEnd = predictedOvulationDay - 3; // < 12
+  const ovulatoryStart = predictedOvulationDay - 2; // 12
+  const ovulatoryEnd = predictedOvulationDay - 1;   // 13
+  const midCycleStart = predictedOvulationDay;      // 14
+  const midCycleEnd = predictedOvulationDay + 1;    // 15
+
+  if (cycleDay < ovulatoryStart) return 'follicular';
+  if (cycleDay >= ovulatoryStart && cycleDay <= ovulatoryEnd) return 'ovulatory';
+  if (cycleDay >= midCycleStart && cycleDay <= midCycleEnd) return 'midcycle';
+  return 'luteal';
+};
+
+const getStatusBadgeClasses = (status) => {
+  switch (status) {
+    case 'high':
+    case 'severe':
+    case 'obese':
+      return 'bg-red-100 text-red-700 border-red-200';
+    case 'low':
+    case 'underweight':
+      return 'bg-sky-100 text-sky-700 border-sky-200';
+    case 'borderline':
+    case 'watch':
+      return 'bg-amber-100 text-amber-700 border-amber-200';
+    case 'normal':
+    case 'good':
+    case 'active':
+    case 'regular':
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    case 'light':
+    case 'moderate':
+    case 'flexible':
+      return 'bg-violet-100 text-violet-700 border-violet-200';
+    default:
+      return 'bg-muted text-muted-foreground border-border';
+  }
+};
+
+const getStatusLabel = (status) => {
+  const labels = {
+    high: 'High',
+    low: 'Low',
+    normal: 'In Range',
+    borderline: 'Borderline',
+    severe: 'Severe',
+    underweight: 'Underweight',
+    overweight: 'Overweight',
+    obese: 'Obese',
+    good: 'Optimal',
+    watch: 'Watch',
+    sedentary: 'Sedentary',
+    light: 'Light Activity',
+    active: 'Active',
+    very_short: 'Very Short',
+    short: 'Short',
+    long: 'Long',
+    regular: 'Regular',
+    flexible: 'Flexible',
+    irregular: 'Irregular',
+    moderate: 'Moderate'
+  };
+
+  return labels[status] || status;
+};
+
+const createGuidanceItem = (title, text, status = 'normal') => ({
+  title,
+  text,
+  status,
+  statusLabel: getStatusLabel(status)
+});
+
+const getRangeStatus = (value, lower, upper) => {
+  if (!Number.isFinite(value)) return null;
+  if (value < lower) return 'low';
+  if (value > upper) return 'high';
+  return 'normal';
+};
+
+const getBmiStatus = (value) => {
+  if (!Number.isFinite(value)) return null;
+  if (value >= 35) return 'severe';
+  if (value > 30) return 'obese';
+  if (value >= 25) return 'overweight';
+  if (value >= 18.5) return 'normal';
+  return 'underweight';
+};
+
+const getHomaIrStatus = (value) => {
+  if (!Number.isFinite(value)) return null;
+  if (value < 1.0) return 'good';
+  if (value <= 2.5) return 'borderline';
+  return 'high';
+};
+
+const getCyclePhaseMeta = (phase) => {
+  switch (phase) {
+    case 'follicular':
+      return {
+        label: 'Follicular Phase',
+        tone: 'bg-sky-50 text-sky-700 border-sky-200',
+        dot: 'bg-sky-500'
+      };
+    case 'ovulatory':
+      return {
+        label: 'Ovulatory Peak',
+        tone: 'bg-amber-50 text-amber-700 border-amber-200',
+        dot: 'bg-amber-500'
+      };
+    case 'midcycle':
+      return {
+        label: 'Mid Cycle',
+        tone: 'bg-violet-50 text-violet-700 border-violet-200',
+        dot: 'bg-violet-500'
+      };
+    case 'luteal':
+      return {
+        label: 'Luteal Phase',
+        tone: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dot: 'bg-emerald-500'
+      };
+    default:
+      return {
+        label: 'Cycle Phase Unavailable',
+        tone: 'bg-muted text-muted-foreground border-border',
+        dot: 'bg-muted-foreground'
+      };
+  }
+};
+
+const buildHighLowText = (value, lower, upper, lowText, highText, inRangeText) => {
+  if (!Number.isFinite(value)) return '';
+
+  if (value < lower) return lowText;
+  if (value > upper) return highText;
+  return inRangeText || '';
+};
+
+const getFSHStaticText = (value, phase) => {
+  if (!Number.isFinite(value) || !phase) return '';
+
+  if (phase === 'follicular') {
+    return buildHighLowText(
+      value,
+      1.4,
+      9.9,
+      'FSH plays a key role in cycle regularity and estrogen signaling. When levels are lower than expected, supporting circadian rhythm through regular sleep timing, adequate dietary fats, stress regulation, and maintaining a consistent daily routine helps promote healthy FSH activity.',
+      'FSH supports ovarian follicle activity and reflects how the brain and ovaries communicate. When FSH levels are higher than expected, prioritizing bone-supportive nutrition (calcium, vitamin D), steady protein intake, gentle weight-bearing movement, and consistent health monitoring helps support hormonal and reproductive wellness.',
+      'FSH is within the expected range for the follicular phase.'
+    );
+  }
+
+  if (phase === 'ovulatory') {
+    return buildHighLowText(
+      value,
+      6.2,
+      17.2,
+      'FSH plays a key role in cycle regularity and estrogen signaling. When levels are lower than expected, supporting circadian rhythm through regular sleep timing, adequate dietary fats, stress regulation, and maintaining a consistent daily routine helps promote healthy FSH activity.',
+      'FSH supports ovarian follicle activity and reflects how the brain and ovaries communicate. When FSH levels are higher than expected, prioritizing bone-supportive nutrition (calcium, vitamin D), steady protein intake, gentle weight-bearing movement, and consistent health monitoring helps support hormonal and reproductive wellness.',
+      'FSH is within the expected range for the ovulatory peak.'
+    );
+  }
+
+  if (phase === 'luteal') {
+    return buildHighLowText(
+      value,
+      1.1,
+      9.2,
+      'FSH plays a key role in cycle regularity and estrogen signaling. When levels are lower than expected, supporting circadian rhythm through regular sleep timing, adequate dietary fats, stress regulation, and maintaining a consistent daily routine helps promote healthy FSH activity.',
+      'FSH supports ovarian follicle activity and reflects how the brain and ovaries communicate. When FSH levels are higher than expected, prioritizing bone-supportive nutrition (calcium, vitamin D), steady protein intake, gentle weight-bearing movement, and consistent health monitoring helps support hormonal and reproductive wellness.',
+      'FSH is within the expected range for the luteal phase.'
+    );
+  }
+
+  if (phase === 'postmenopausal') {
+    return buildHighLowText(
+      value,
+      19.3,
+      100.6,
+      'FSH plays a key role in cycle regularity and estrogen signaling. When levels are lower than expected, supporting circadian rhythm through regular sleep timing, adequate dietary fats, stress regulation, and maintaining a consistent daily routine helps promote healthy FSH activity.',
+      'FSH supports ovarian follicle activity and reflects how the brain and ovaries communicate. When FSH levels are higher than expected, prioritizing bone-supportive nutrition (calcium, vitamin D), steady protein intake, gentle weight-bearing movement, and consistent health monitoring helps support hormonal and reproductive wellness.',
+      'FSH is within the expected range for post-menopausal females.'
+    );
+  }
+
+  return '';
+};
+
+const getLHStaticText = (value, phase) => {
+  if (!Number.isFinite(value) || !phase) return '';
+
+  if (phase === 'follicular') {
+    return buildHighLowText(
+      value,
+      1,
+      15,
+      'LH contributes to cycle coordination and hormonal rhythm. When levels are lower than expected, supporting hypothalamic health through sufficient caloric intake, restorative sleep, gentle movement, and emotional well-being helps promote healthy LH function.',
+      'LH supports ovulation timing and progesterone signaling. When LH levels are higher than expected, focusing on blood-sugar stability, moderate exercise, stress-management practices, and regular meal timing helps support balanced LH signaling.',
+      'LH is within the expected range for the follicular phase.'
+    );
+  }
+
+  if (phase === 'ovulatory') {
+    return buildHighLowText(
+      value,
+      20,
+      75,
+      'LH contributes to cycle coordination and hormonal rhythm. When levels are lower than expected, supporting hypothalamic health through sufficient caloric intake, restorative sleep, gentle movement, and emotional well-being helps promote healthy LH function.',
+      'LH supports ovulation timing and progesterone signaling. When LH levels are higher than expected, focusing on blood-sugar stability, moderate exercise, stress-management practices, and regular meal timing helps support balanced LH signaling.',
+      'LH is within the expected range for the ovulatory peak.'
+    );
+  }
+
+  if (phase === 'midcycle') {
+    return 'LH is in the expected mid-cycle surge window.';
+  }
+
+  if (phase === 'luteal') {
+    return buildHighLowText(
+      value,
+      0.6,
+      16,
+      'LH contributes to cycle coordination and hormonal rhythm. When levels are lower than expected, supporting hypothalamic health through sufficient caloric intake, restorative sleep, gentle movement, and emotional well-being helps promote healthy LH function.',
+      'LH supports ovulation timing and progesterone signaling. When LH levels are higher than expected, focusing on blood-sugar stability, moderate exercise, stress-management practices, and regular meal timing helps support balanced LH signaling.',
+      'LH is within the expected range for the luteal phase.'
+    );
+  }
+
+  if (phase === 'postmenopausal') {
+    return buildHighLowText(
+      value,
+      15,
+      60,
+      'LH contributes to cycle coordination and hormonal rhythm. When levels are lower than expected, supporting hypothalamic health through sufficient caloric intake, restorative sleep, gentle movement, and emotional well-being helps promote healthy LH function.',
+      'LH supports ovulation timing and progesterone signaling. When LH levels are higher than expected, focusing on blood-sugar stability, moderate exercise, stress-management practices, and regular meal timing helps support balanced LH signaling.',
+      'LH is within the expected range for post-menopausal females.'
+    );
+  }
+
+  return '';
+};
+
+const getAndrogenStaticText = (marker, value) => {
+  if (!Number.isFinite(value)) return '';
+
+  if (marker === 'testosterone') {
+    return buildHighLowText(
+      value,
+      15,
+      70,
+      'Androgens contribute to physical vitality, motivation, and lean muscle maintenance. When levels are lower than expected, supporting androgen health through adequate protein intake, progressive strength training, quality sleep, and recovery-focused routines helps sustain overall hormonal resilience.',
+      'Androgens support muscle strength, metabolism, and energy in women. When total androgen levels are higher than expected, emphasizing regular resistance training, daily movement, and stress-reduction practices helps support healthy androgen activity.',
+      'Total Testosterone is within the expected range.'
+    );
+  }
+
+  if (marker === 'androstenedione') {
+    return buildHighLowText(
+      value,
+      30,
+      200,
+      'Androstenedione contributes to the body’s ability to produce downstream sex hormones. When levels are lower than expected, supporting hormone production with sufficient caloric intake, balanced macronutrients, gentle strength training, and restorative recovery helps promote hormonal resilience.',
+      'Androstenedione is a precursor hormone that the body uses to produce estrogen and testosterone. When levels are higher than expected, supporting adrenal and ovarian balance through blood-sugar-stable meals, stress regulation, regular movement, and adequate sleep helps promote healthy hormone conversion.',
+      'Androstenedione is within the expected range.'
+    );
+  }
+
+  return '';
+};
+
+const getSHBGStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  return buildHighLowText(
+    value,
+    18,
+    144,
+    'SHBG helps keep sex hormones in healthy balance by managing their availability in the bloodstream. When SHBG levels are lower than expected, focusing on insulin-supportive nutrition, regular physical activity, liver-supportive habits, and consistent sleep helps promote healthy hormone regulation.',
+    'SHBG is a transport protein that regulates how much estrogen and testosterone are available to the body. When SHBG levels are higher than expected, supporting metabolic health through adequate protein intake, balanced thyroid-supportive nutrition, and regular strength-based movement helps maintain hormone availability.',
+    'SHBG is within the expected range.'
+  );
+};
+
+const getDHEASStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  return buildHighLowText(
+    value,
+    35,
+    430,
+    'DHEA-S supports vitality, immune health, and hormonal resilience across a woman’s lifespan. When levels are lower than expected, supporting adrenal health through adequate rest, balanced nutrition, gentle strength training, and stress-supportive routines helps sustain overall hormonal well-being.',
+    'DHEA-S is an adrenal-derived hormone involved in energy, stress response, and androgen production. When levels are higher than expected, prioritizing nervous-system regulation, stress-reduction practices, consistent sleep, and recovery-focused routines helps support adrenal balance.',
+    'DHEA-S is within the expected range.'
+  );
+};
+
+const getInsulinStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  return buildHighLowText(
+    value,
+    2,
+    20,
+    'Insulin plays a key role in energy regulation and blood sugar balance. When fasting insulin is lower than expected, supporting stable energy availability through regular meals, balanced carbohydrates, adequate protein, and stress-supportive routines helps maintain healthy metabolic function.',
+    'Insulin is a hormone that helps move glucose from the bloodstream into cells for energy. When fasting insulin is higher than expected, supporting insulin sensitivity through balanced meals with fiber and protein, regular strength and aerobic movement, consistent meal timing, and quality sleep helps promote metabolic and hormonal health.',
+    'Fasting Insulin is within the expected range.'
+  );
+};
+
+const getGlucoseStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  return buildHighLowText(
+    value,
+    70,
+    99,
+    'Fasting plasma glucose reflects baseline energy availability in the body. When levels are lower than expected, supporting stable blood sugar through regular meals, balanced macronutrients, gentle morning nourishment, and adequate recovery helps promote metabolic balance.',
+    'Fasting plasma glucose reflects how the body manages blood sugar between meals. When levels are higher than expected, focusing on steady carbohydrate intake, daily physical activity, hydration, sleep consistency, and stress management helps support healthy glucose regulation.',
+    'Fasting Plasma Glucose is within the expected range.'
+  );
+};
+
+const getHomaIrStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  if (value < 1.0) return 'HOMA-IR suggests insulin sensitivity.';
+  if (value <= 2.5) return 'HOMA-IR suggests early insulin resistance.';
+  return 'HOMA-IR suggests insulin resistance.';
+};
+
+const getEstradiolStaticText = (value, phase) => {
+  if (!Number.isFinite(value) || !phase) return '';
+
+  if (phase === 'follicular') {
+    return buildHighLowText(
+      value,
+      20,
+      50,
+      'Estradiol plays a key role in cycle regularity, bone strength, and overall vitality. When levels are lower than expected, supporting estrogen production through adequate dietary fats, consistent energy intake, weight-bearing exercise, and quality sleep helps sustain hormonal health.',
+      'Estradiol is the primary estrogen that supports the menstrual cycle, bone health, and cardiovascular function. When estradiol levels are higher than expected, supporting healthy estrogen metabolism through fiber-rich nutrition, regular movement, liver-supportive habits, and stress regulation helps promote hormonal balance.',
+      'Estradiol is within the expected range for the follicular phase.'
+    );
+  }
+
+  if (phase === 'ovulatory') {
+    return buildHighLowText(
+      value,
+      200,
+      400,
+      'Estradiol plays a key role in cycle regularity, bone strength, and overall vitality. When levels are lower than expected, supporting estrogen production through adequate dietary fats, consistent energy intake, weight-bearing exercise, and quality sleep helps sustain hormonal health.',
+      'Estradiol is the primary estrogen that supports the menstrual cycle, bone health, and cardiovascular function. When estradiol levels are higher than expected, supporting healthy estrogen metabolism through fiber-rich nutrition, regular movement, liver-supportive habits, and stress regulation helps promote hormonal balance.',
+      'Estradiol is within the expected range for the ovulatory peak.'
+    );
+  }
+
+  if (phase === 'luteal') {
+    return buildHighLowText(
+      value,
+      60,
+      250,
+      'Estradiol plays a key role in cycle regularity, bone strength, and overall vitality. When levels are lower than expected, supporting estrogen production through adequate dietary fats, consistent energy intake, weight-bearing exercise, and quality sleep helps sustain hormonal health.',
+      'Estradiol is the primary estrogen that supports the menstrual cycle, bone health, and cardiovascular function. When estradiol levels are higher than expected, supporting healthy estrogen metabolism through fiber-rich nutrition, regular movement, liver-supportive habits, and stress regulation helps promote hormonal balance.',
+      'Estradiol is within the expected range for the luteal phase.'
+    );
+  }
+
+  if (phase === 'postmenopausal') {
+    return buildHighLowText(
+      value,
+      20,
+      30,
+      'Estradiol plays a key role in cycle regularity, bone strength, and overall vitality. When levels are lower than expected, supporting estrogen production through adequate dietary fats, consistent energy intake, weight-bearing exercise, and quality sleep helps sustain hormonal health.',
+      'Estradiol is the primary estrogen that supports the menstrual cycle, bone health, and cardiovascular function. When estradiol levels are higher than expected, supporting healthy estrogen metabolism through fiber-rich nutrition, regular movement, liver-supportive habits, and stress regulation helps promote hormonal balance.',
+      'Estradiol is within the expected range for post-menopausal females.'
+    );
+  }
+
+  return '';
+};
+
+const getProgesteroneStaticText = (value, phase) => {
+  if (!Number.isFinite(value) || !phase) return '';
+
+  if (phase === 'follicular') {
+    return buildHighLowText(
+      value,
+      0,
+      1.0,
+      'Progesterone supports cycle stability, sleep quality, and nervous system calm. In the follicular phase, low progesterone is expected; supporting gentle movement, hydration, regular sleep routines, and stress-supportive practices helps maintain hormonal equilibrium.',
+      'Progesterone supports cycle stability, sleep quality, and nervous system calm. When progesterone levels are higher than expected, prioritizing gentle movement, hydration, regular sleep routines, and stress-supportive practices helps maintain hormonal equilibrium.',
+      'Progesterone is within the expected range for the follicular phase.'
+    );
+  }
+
+  if (phase === 'luteal') {
+    if (value < 2) {
+      return 'Progesterone plays an essential role in cycle balance and post-ovulation support. When levels are lower than expected, supporting progesterone production through adequate caloric intake, micronutrient-rich foods, stress reduction, consistent sleep, and balanced exercise helps promote hormonal resilience.';
+    }
+    if (value > 10) {
+      return 'Progesterone supports cycle stability, sleep quality, and nervous system calm. When progesterone levels are higher than expected, prioritizing gentle movement, hydration, regular sleep routines, and stress-supportive practices helps maintain hormonal equilibrium.';
+    }
+    return 'Progesterone is within the expected range for the luteal phase.';
+  }
+
+  if (phase === 'postmenopausal') {
+    return buildHighLowText(
+      value,
+      0,
+      1.0,
+      'Progesterone supports cycle stability, sleep quality, and nervous system calm. In post-menopause, low progesterone is expected; supporting gentle movement, hydration, regular sleep routines, and stress-supportive practices helps maintain hormonal equilibrium.',
+      'Progesterone supports cycle stability, sleep quality, and nervous system calm. When progesterone levels are higher than expected, prioritizing gentle movement, hydration, regular sleep routines, and stress-supportive practices helps maintain hormonal equilibrium.',
+      'Progesterone is within the expected range for post-menopausal females.'
+    );
+  }
+
+  return '';
+};
+
+const getBmiStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  if (value >= 35) {
+    return 'This range can place added strain on the body’s energy and hormone systems. Small, compassionate steps—like regular nourishing meals, light daily movement, improved sleep routines, and stress support—can make meaningful differences in supporting metabolic and reproductive well-being.';
+  }
+
+  if (value > 30) {
+    return 'This range may increase the body’s workload in managing energy and hormone signals. Gentle, sustainable lifestyle changes—such as consistent meals, gradual increases in physical activity, stress care, and quality rest—can help support metabolic health and hormonal balance over time.';
+  }
+
+  if (value >= 25) {
+    return 'Being in this range can sometimes be linked to changes in how the body handles energy and hormones. Supporting steady blood sugar through balanced meals, regular movement, stress reduction, and good sleep can help improve metabolic balance and support long-term hormonal health.';
+  }
+
+  if (value >= 18.5) {
+    return 'A weight range within this category often supports balanced energy use and hormone function. Continuing healthy habits like regular meals, consistent movement, quality sleep, and stress care can help maintain metabolic and reproductive well-being over time.';
+  }
+
+  return 'Being underweight can sometimes mean the body isn’t getting enough energy or nutrients to support regular hormone and cycle function. Focusing on nourishing meals, regular eating times, adequate protein, good sleep, and gentle movement can help support energy balance and reproductive health.';
+};
+
+const getWaistStaticText = (value) => {
+  if (!Number.isFinite(value)) return '';
+
+  if (value > 88) {
+    return 'Waist circumference reflects how the body stores fat around the midsection, which is closely linked to metabolic and hormonal health. When measurements are higher than normal, supporting core health through regular movement (especially strength and walking), balanced meals that support blood sugar, stress regulation, quality sleep, and daily activity helps promote long-term wellness.';
+  }
+
+  return 'Waist circumference is within a range that generally supports metabolic health. Continuing balanced meals, regular movement, quality sleep, and stress care can help maintain that balance.';
+};
+
+const getActivityStaticText = (value) => {
+  if (!value) return '';
+
+  if (value === 'sedentary') {
+    return 'Spending most of the day sitting can make it harder for the body to use energy efficiently, which may affect hormone balance over time. Even small amounts of daily movement—like short walks, stretching, or light household activity—can help improve energy use and support metabolic and reproductive health.';
+  }
+
+  if (value === 'light') {
+    return 'Light movement is a great foundation for health. To further support hormone balance, adding a bit more consistency—such as daily walks, gentle strength exercises, or longer movement sessions—can help the body manage energy, support insulin balance, and promote overall well-being.';
+  }
+
+  if (value === 'active') {
+    return 'Regular physical activity strongly supports hormone balance, energy regulation, and long-term reproductive health. Continuing a mix of movement, strength, and recovery—along with adequate rest and nutrition—helps maintain these benefits and protects against burnout.';
+  }
+
+  return '';
+};
+
+const getSleepStaticText = (value) => {
+  if (!value) return '';
+
+  if (value === 'very_short') {
+    return 'Sleeping very little on a regular basis can place stress on the body and make it harder to regulate energy and hormones. Prioritizing longer, more consistent sleep—along with calming bedtime routines and regular meal times—can help support hormone balance and protect long-term reproductive health.';
+  }
+
+  if (value === 'short') {
+    return 'Regularly getting short sleep can affect how the body manages blood sugar, appetite, and stress hormones. Gradually increasing sleep time, keeping a steady sleep schedule, and limiting late-night stimulation can help improve energy balance and support hormonal well-being over time.';
+  }
+
+  if (value === 'normal') {
+    return 'This amount of sleep generally supports healthy energy use and hormone regulation. Maintaining consistent sleep and wake times, along with balanced nutrition and daily movement, helps protect metabolic and reproductive health.';
+  }
+
+  if (value === 'long') {
+    return 'Sleeping longer than usual is not always a problem, but when it happens often, it can sometimes reflect low energy, poor sleep quality, or underlying stress. Supporting daytime movement, regular meal timing, and good sleep quality can help improve overall energy and hormonal balance.';
+  }
+
+  return '';
+};
+
+const getStressStaticText = (value) => {
+  if (!value) return '';
+
+  if (value === 'low') {
+    return 'Low stress levels help keep the body’s stress hormones and reproductive hormones working in balance. Continuing supportive habits like regular sleep, nourishing meals, gentle movement, and daily moments of calm can help maintain long-term hormonal and overall well-being.';
+  }
+
+  if (value === 'moderate') {
+    return 'Moderate stress can cause temporary shifts in hormones, especially during busy or demanding periods of life. Supporting yourself with consistent routines, balanced meals, regular movement, and simple stress-relief practices can help the body recover and maintain hormonal balance.';
+  }
+
+  if (value === 'high') {
+    return 'High stress over time can strain the body’s stress response system and affect how hormones and energy are regulated. Prioritizing stress care—such as improving sleep, creating regular meal times, gentle daily movement, and intentional relaxation—can help reduce strain on the body and support healthier hormonal patterns.';
+  }
+
+  return '';
+};
+
+const getMealPatternStaticText = (value) => {
+  if (!value) return '';
+
+  if (value === '3meals') {
+    return 'Eating meals at regular times helps the body know when to release energy and hormones. This pattern supports stable blood sugar and metabolic balance, which helps protect long-term hormonal and reproductive health.';
+  }
+
+  if (value === 'small_snacks') {
+    return 'Eating smaller meals or snacks throughout the day can work well when meals are balanced and planned. Including protein, fiber, and healthy fats helps prevent energy dips and supports steady hormone signals.';
+  }
+
+  if (value === 'irregular') {
+    return 'Skipping meals or eating at unpredictable times can stress the body and make it harder to regulate energy and hormones. Creating more consistent meal times—even gradually—can help support metabolic stability and healthier hormone patterns.';
+  }
+
+  return '';
+};
+
+const getSugaryStaticText = (value) => {
+  if (!value) return '';
+
+  if (value === 'low') {
+    return 'Keeping sugary drinks to a low level helps the body maintain steady energy and healthy hormone signals. Continuing this habit supports metabolic balance and helps protect long-term reproductive and hormonal well-being.';
+  }
+
+  if (value === 'moderate') {
+    return 'Having sugary drinks sometimes may be okay on its own, but when combined with other factors like stress, irregular meals, or poor sleep, it can affect energy and hormone balance. Pairing sweet drinks with meals and choosing water or unsweetened options more often can help reduce their impact.';
+  }
+
+  if (value === 'high') {
+    return 'Frequent sugary drinks can cause repeated spikes in blood sugar, which may strain the body’s ability to regulate energy and hormones over time. Gradually reducing sugary drinks and replacing them with water, herbal teas, or unsweetened options can strongly support metabolic and hormonal health.';
+  }
+
+  return '';
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // QUIZ PAGE COMPONENT ------------------------------------------------------------------------>
 const QuizPage = () => {
@@ -764,10 +1390,14 @@ const QuizPage = () => {
   const [renderResultModal, setRenderResultModal] = useState(false);
 
   const [isSectionTransitioning, setIsSectionTransitioning] = useState(false);
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
 
   const handleBackToDashboard = () => {
     window.location.href = '/pcos-care-dashboard';
   };
+
+  const currentCyclePhase = getCyclePhaseFromLMP(answers?.LMP);
+  const currentCyclePhaseMeta = getCyclePhaseMeta(currentCyclePhase);
 
   // Auto-calculate BMI when weight and height change
   useEffect(() => {
@@ -786,17 +1416,22 @@ const QuizPage = () => {
 
   // Auto-calculate Waist:Hip Ratio
   useEffect(() => {
-    const waist = parseFloat(answers?.['Waist(inch)']);
-    const hip = parseFloat(answers?.['Hip(inch)']);
+    const waist = parseFloat(answers?.['Waist(inch)'] ?? answers?.['Waist(Cm)']);
+    const hip = parseFloat(answers?.['Hip(inch)'] ?? answers?.['Hip(Cm)']);
 
     if (waist > 0 && hip > 0) {
       const ratio = waist / hip;
       setAnswers(prev => ({
         ...prev,
-        'Waist:Hip Ratio': ratio?.toFixed(3)
+        'Waist:Hip Ratio': ratio.toFixed(3)
       }));
     }
-  }, [answers?.['Waist(inch)'], answers?.['Hip(inch)']]);
+  }, [
+    answers?.['Waist(inch)'],
+    answers?.['Hip(inch)'],
+    answers?.['Waist(Cm)'],
+    answers?.['Hip(Cm)']
+  ]);
 
   // Handle showing/hiding Section Result modals with smooth transitions
   useEffect(() => {
@@ -1116,7 +1751,7 @@ const QuizPage = () => {
           id: 'LMP',
           type: 'date',
           label: 'LMP',
-          required: false,
+          required: true,
           helpText: 'Last menstrual period (mm/dd/yr)'
         }
       ]
@@ -1134,16 +1769,18 @@ const QuizPage = () => {
           unit: 'IU/L',
           min: 0,
           step: 0.1,
+          helpText: 'Follicle Stimulating Hormone',
           required: false
         },
         {
           id: 'LH(mIU/mL)',
           type: 'number',
-          label: 'LSH Levels',
-          placeholder: 'Enter LSH level',
+          label: 'LH Levels',
+          placeholder: 'Enter LH level',
           unit: 'IU/L',
           min: 0,
           step: 0.1,
+          helpText: 'Luteinizing Hormone',
           required: false
         },
         {
@@ -1245,13 +1882,13 @@ const QuizPage = () => {
           required: false
         },
         {
-          id: 'Height(In)',
+          id: 'Height(Cm)',
           type: 'number',
           label: 'Height',
           placeholder: 'Enter height',
-          unit: 'in',
-          min: 40,
-          max: 90,
+          unit: 'cm',
+          min: 100,
+          max: 250,
           step: 0.1,
           required: false
         },
@@ -1306,134 +1943,10 @@ const QuizPage = () => {
           step: 0.001,
           required: false,
           autoCalculated: true
-        },
-        {
-          id: 'cycle_phase',
-          type: 'select',
-          label: 'Cycle / Menopausal Phase',
-          options: [
-            { value: 'follicular', label: 'Adult Females - Follicular Phase' },
-            { value: 'ovulatory', label: 'Adult Females - Ovulatory Peak' },
-            { value: 'luteal', label: 'Adult Females - Luteal Phase' },
-            { value: 'postmenopausal', label: 'Post-Menopausal Females' }
-          ],
-          required: false
         }
       ]
     }
   ];
-
-  // Add hormones section ONLY for professional quiz
-  if (quizType === 'professional') {
-    const hormonesSection = {
-      id: 4,
-      title: 'Hormones & Lab Values',
-      description: 'Hormone levels and laboratory test results (all optional)',
-      questions: [
-        {
-          id: 'I   beta-HCG(mIU/mL)',
-          type: 'number',
-          label: 'Beta-HCG Level',
-          placeholder: 'Enter value',
-          unit: 'mIU/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Pregnancy hormone level'
-        },
-        {
-          id: 'FSH(mIU/mL)',
-          type: 'number',
-          label: 'FSH Level',
-          placeholder: 'Enter value',
-          unit: 'mIU/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Follicle Stimulating Hormone - typical range: 3-20 mIU/mL'
-        },
-        {
-          id: 'LH(mIU/mL)',
-          type: 'number',
-          label: 'LH Level',
-          placeholder: 'Enter value',
-          unit: 'mIU/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Luteinizing Hormone - typical range: 2-15 mIU/mL'
-        },
-        {
-          id: 'FSH/LH',
-          type: 'number',
-          label: 'FSH/LH Ratio',
-          placeholder: 'Enter ratio',
-          min: 0,
-          step: 0.01,
-          required: false,
-          helpText: 'Ratio of FSH to LH'
-        },
-        {
-          id: 'PRG(ng/mL)',
-          type: 'number',
-          label: 'Progesterone Level',
-          placeholder: 'Enter value',
-          unit: 'ng/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Varies by cycle phase'
-        },
-        {
-          id: 'TSH (mIU/L)',
-          type: 'number',
-          label: 'TSH Level',
-          placeholder: 'Enter value',
-          unit: 'mIU/L',
-          min: 0,
-          step: 0.01,
-          required: false,
-          helpText: 'Thyroid Stimulating Hormone - normal: 0.4-4.0 mIU/L'
-        },
-        {
-          id: 'PRL(ng/mL)',
-          type: 'number',
-          label: 'Prolactin Level',
-          placeholder: 'Enter value',
-          unit: 'ng/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Normal range: 4-25 ng/mL'
-        },
-        {
-          id: 'Vit D3 (ng/mL)',
-          type: 'number',
-          label: 'Vitamin D3 Level',
-          placeholder: 'Enter value',
-          unit: 'ng/mL',
-          min: 0,
-          step: 0.1,
-          required: false,
-          helpText: 'Optimal range: 30-50 ng/mL'
-        },
-        {
-          id: 'RBS(mg/dl)',
-          type: 'number',
-          label: 'Random Blood Sugar',
-          placeholder: 'Enter value',
-          unit: 'mg/dL',
-          min: 0,
-          step: 1,
-          required: false,
-          helpText: 'Normal range: 70-140 mg/dL'
-        }
-      ]
-    };
-
-    // Insert hormones section at position 3 (after Reproductive & Labs, before Symptoms)
-    quizSections?.splice(3, 0, hormonesSection);
-  }
 
   // Add image upload section for Professional Quiz
   if (quizType === 'professional') {
@@ -1527,11 +2040,20 @@ const QuizPage = () => {
       if (quizType === 'professional' && uploadedImages?.length > 0) {
         const mostRecentImage = uploadedImages?.[uploadedImages?.length - 1];
 
-        console.log('Uploading image to /predict-image...');
-        const imgResponse = await predictImage(mostRecentImage?.file);
+        setIsImageProcessing(true);
+        try {
+          const [imgResponse] = await Promise.all([
+            predictImage(mostRecentImage?.file),
+            sleep(2000)
+          ]);
 
-        if (imgResponse?.ok) {
-          imageResult = imgResponse?.result;
+          if (imgResponse?.ok) {
+            imageResult = imgResponse?.result;
+          } else {
+            console.warn('Image prediction failed:', imgResponse?.error);
+          }
+        } finally {
+          setIsImageProcessing(false);
         }
       }
 
@@ -1555,6 +2077,7 @@ const QuizPage = () => {
       setShowResultModal(true);
     } finally {
       setIsSubmitting(false);
+      setIsSectionTransitioning(false);
     }
   };
 
@@ -1575,46 +2098,57 @@ const QuizPage = () => {
   const handleNext = () => {
     if (!validateCurrentSection()) return;
 
-    // General quiz: show section result first, do NOT advance yet
-    if (quizType === 'general') {
-      const sectionSummary = buildSectionSummary(currentSectionData, answers);
-      const guidance = getGeneralSectionGuidance(currentSectionData, answers);
+    const isImageUploadSection = currentSectionData?.questions?.[0]?.type === 'image-upload';
 
-      // If there is nothing to show, move on immediately
-      if (sectionSummary.length === 0 && guidance.length === 0) {
-        if (currentSection < quizSections?.length - 1) {
-          setCurrentSection(prev => prev + 1);
-          setShowPartialWarning(false);
-        } else {
-          handleBackToDashboard();
-        }
-        return;
-      }
-
-      setSectionResults({
-        sectionTitle: currentSectionData?.title,
-        answers: sectionSummary,
-        guidance
-      });
-      setShowSectionResultModal(true);
+    if (isImageUploadSection) {
+      setIsSectionTransitioning(true);
+      handleSubmit();
       return;
     }
 
-    // Professional quiz logic
     const isLastSection = currentSection === quizSections?.length - 1;
 
     if (isLastSection) {
       const modelPayload = mapAnswersToModel(answers, quizType);
       if (modelPayload?.partial_input && !showPartialWarning) {
         setShowPartialWarning(true);
+        setIsSectionTransitioning(false);
         return;
       }
+
+      setIsSectionTransitioning(true);
       handleSubmit();
       return;
     }
 
-    setCurrentSection(prev => prev + 1);
-    setShowPartialWarning(false);
+    const sectionSummary = buildSectionSummary(currentSectionData, answers);
+
+    const guidance =
+      quizType === 'general'
+        ? getGeneralSectionGuidance(currentSectionData, answers)
+        : getProfessionalSectionGuidance(currentSectionData, answers);
+
+    if (sectionSummary.length === 0 && guidance.length === 0) {
+      if (currentSection < quizSections?.length - 1) {
+        setCurrentSection(prev => prev + 1);
+        setShowPartialWarning(false);
+      } else {
+        handleBackToDashboard();
+      }
+      setIsSectionTransitioning(false);
+      return;
+    }
+
+    setSectionResults({
+      sectionTitle: currentSectionData?.title,
+      cyclePhase: quizType === 'professional' ? getCyclePhaseFromLMP(answers?.LMP) : null,
+      cyclePhaseMeta: quizType === 'professional' ? getCyclePhaseMeta(getCyclePhaseFromLMP(answers?.LMP)) : null,
+      answers: sectionSummary,
+      guidance
+    });
+
+    setShowSectionResultModal(true);
+    setIsSectionTransitioning(false);
   };
 
   const handlePrevious = () => {
@@ -1626,24 +2160,19 @@ const QuizPage = () => {
 
   // Handle "Continue" after showing section results in General Quiz (NEW)
   const handleContinueFromSectionResult = () => {
-    setIsSectionTransitioning(true);
+    setShowSectionResultModal(false);
+    setSectionResults(null);
 
-    setTimeout(() => {
-      setShowSectionResultModal(false);
-      setSectionResults(null);
-
-      if (currentSection < quizSections?.length - 1) {
-        setCurrentSection(prev => prev + 1);
-      } else {
-        handleBackToDashboard();
-      }
-
-      setIsSectionTransitioning(false);
-    }, 200);
+    if (currentSection < quizSections?.length - 1) {
+      setCurrentSection(prev => prev + 1);
+    } else {
+      handleBackToDashboard();
+    }
   };
 
   const isFirstSection = currentSection === 0;
   const isLastSection = currentSection === quizSections?.length - 1;
+  const isBusy = isSubmitting || isSectionTransitioning;
 
   // Render individual question input
   const renderQuestionInput = (question) => {
@@ -1710,6 +2239,20 @@ const QuizPage = () => {
               error ? "border-red-500" : "border-primary/20 focus:border-primary"
             )}
           />
+        )}
+
+        {quizType === 'professional' && question?.id === 'LMP' && currentCyclePhase && (
+          <div className="mt-3 flex items-center gap-3 px-4 py-3 rounded-xl border bg-background">
+            <span className={cn("h-3 w-3 rounded-full", currentCyclePhaseMeta?.dot)} />
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Calculated Cycle Phase
+              </p>
+              <p className={cn("text-sm font-semibold border px-3 py-1 rounded-full inline-flex items-center", currentCyclePhaseMeta?.tone)}>
+                {currentCyclePhaseMeta?.label}
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Radio Buttons */}
@@ -1871,8 +2414,8 @@ const QuizPage = () => {
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <BackButton isSidebarOpen={isSidebarOpen} />
-        <main className="min-h-screen bg-background smooth-scroll ml-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 lg:pt-20 ">
+        <main className="min-h-screen bg-background smooth-scroll ml-0 md:ml-20">
+          <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-6 md:pt-12 lg:pt-20 pb-8">
             {/* Header */}
             <header className="text-center mb-8 md:mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
@@ -1941,7 +2484,7 @@ const QuizPage = () => {
             {/* Section Result Modal */}
             {renderSectionResultModal && sectionResults && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-background rounded-2xl shadow-2xl max-w-3xl lg:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-background rounded-2xl shadow-2xl w-[95vw] sm:w-full max-w-3xl lg:max-w-4xl max-h-[92vh] overflow-y-auto">
                   <div className="p-6 md:p-8">
                     <div className="flex items-start justify-between mb-6">
                       <div>
@@ -1949,7 +2492,7 @@ const QuizPage = () => {
                           Section Summary
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {sectionResults?.sectionTitle}
+                          {sectionResults?.sectionTitle} · {sectionResults?.answers?.length || 0} answered · {sectionResults?.guidance?.length || 0} prompts
                         </p>
                       </div>
                       <button
@@ -1961,12 +2504,31 @@ const QuizPage = () => {
                       </button>
                     </div>
 
+                    {quizType === 'professional' && sectionResults?.cyclePhase && (
+                      <div className="mb-5 p-4 rounded-xl border bg-background shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={cn("h-3 w-3 rounded-full", sectionResults?.cyclePhaseMeta?.dot)} />
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Calculated Cycle Phase
+                            </p>
+                            <p className={cn(
+                              "mt-1 text-sm font-semibold border px-3 py-1 rounded-full inline-flex items-center",
+                              sectionResults?.cyclePhaseMeta?.tone
+                            )}>
+                              {sectionResults?.cyclePhaseMeta?.label}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-6 mb-6">
                       <div className="p-5 rounded-xl bg-muted/30 border border-border">
                         <h4 className="font-semibold text-foreground mb-3">Your Answers</h4>
                         <div className="space-y-3">
                           {sectionResults?.answers?.map((item) => (
-                            <div key={item.id} className="flex justify-between gap-4">
+                            <div key={item.id} className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4">
                               <span className="text-sm text-muted-foreground">{item.label}</span>
                               <span className="text-sm font-medium text-foreground text-right">
                                 {item.value}
@@ -1984,7 +2546,21 @@ const QuizPage = () => {
                               key={index}
                               className="p-5 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20"
                             >
-                              <h5 className="font-semibold text-foreground mb-2">{item.title}</h5>
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <h5 className="font-semibold text-foreground">{item.title}</h5>
+
+                                {item.status && (
+                                  <span
+                                    className={cn(
+                                      "px-2.5 py-1 rounded-full text-[11px] font-semibold border whitespace-nowrap",
+                                      getStatusBadgeClasses(item.status)
+                                    )}
+                                  >
+                                    {item.statusLabel || getStatusLabel(item.status)}
+                                  </span>
+                                )}
+                              </div>
+
                               <p className="text-sm text-muted-foreground leading-6">{item.text}</p>
                             </div>
                           ))}
@@ -1993,7 +2569,7 @@ const QuizPage = () => {
                     </div>
 
                     <div className="border-t bg-background p-4 md:p-6 sticky bottom-0">
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                           variant="outline"
                           size="lg"
@@ -2038,8 +2614,8 @@ const QuizPage = () => {
             {/* Result Modal */}
             {showResultModal && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-background rounded-2xl shadow-2xl max-w-3xl lg:max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                  <div className="p-6 md:p-8">
+                <div className="bg-background rounded-2xl shadow-2xl w-[95vw] sm:w-full max-w-3xl lg:max-w-4xl max-h-[92vh] overflow-y-auto">
+                  <div className="p-4 sm:p-6 md:p-8">
                     {/* Modal Header */}
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-3">
@@ -2175,12 +2751,12 @@ const QuizPage = () => {
                                 <span className="font-bold text-foreground text-lg">{results?.image?.predicted_label}</span>
                               </div> */}
                               <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Probability:</span>
-                                <span className="font-bold text-foreground text-lg">
+                                <span className="text-sm text-muted-foreground">Probability of having PCOS:</span>
+                                <span className="font-bold text-foreground text-2xl">
                                   {results?.image?.probability_display || `${(results?.image?.probability * 100)?.toFixed(1)}%`}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
+                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
                                 <span className="text-sm text-muted-foreground">Risk Level:</span>
                                 <span className={cn(
                                   "px-4 py-1.5 rounded-full text-sm font-semibold",
@@ -2189,7 +2765,7 @@ const QuizPage = () => {
                                 )}>
                                   {results?.image?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
                                 </span>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         )}
@@ -2227,16 +2803,6 @@ const QuizPage = () => {
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={handleCloseModal}
-                            className="flex-1"
-                            iconName="X"
-                            iconPosition="left"
-                          >
-                            Close
-                          </Button>
                           <Button
                             variant="outline"
                             size="lg"
@@ -2347,7 +2913,7 @@ const QuizPage = () => {
             {/* Navigation Buttons */}
             {!results && (
               <>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                   <Button
                     variant="outline"
                     size="lg"
@@ -2355,7 +2921,7 @@ const QuizPage = () => {
                     disabled={isFirstSection || isSubmitting}
                     iconName="ArrowLeft"
                     iconPosition="left"
-                    className="flex-1 max-w-xs"
+                    className="w-full sm:flex-1 sm:max-w-xs"
                   >
                     Previous
                   </Button>
@@ -2370,13 +2936,13 @@ const QuizPage = () => {
                     onClick={handleNext}
                     iconName={isLastSection ? 'Check' : 'ArrowRight'}
                     iconPosition="right"
-                    className="flex-1 max-w-xs"
-                    disabled={isSubmitting}
+                    className="flex-1 max-w-xs w-full sm:w-auto"
+                    disabled={isBusy}
                   >
-                    {isSubmitting ? (
+                    {isBusy ? (
                       <span className="inline-flex items-center gap-2">
                         <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                        {isLastSection ? 'Submitting...' : 'Next'}
+                        {isSubmitting ? 'Submitting...' : 'Loading...'}
                       </span>
                     ) : (
                       isLastSection ? 'Complete' : 'Next'
