@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes as RouterRoutes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
 import NotFound from "pages/NotFound";
@@ -10,28 +15,31 @@ import ClinicsNearMe from './pages/clinics-near-me';
 import FactsAndMythsPage from './pages/facts-and-myths';
 import TermsModal from './components/ui/TermsModal';
 
-const TERMS_ACCEPTED_KEY = 'pcos_care_terms_accepted';
-
 const RoutesWrapper = () => {
+  const location = useLocation();
   const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
-    const accepted = localStorage.getItem(TERMS_ACCEPTED_KEY);
-    if (!accepted) {
-      setShowTerms(true);
-    }
-  }, []);
+    const isDashboardPage =
+      location.pathname === "/" ||
+      location.pathname === "/pcos-care-dashboard";
+
+    setShowTerms(isDashboardPage);
+  }, [location.pathname]);
 
   const handleTermsAccept = () => {
-    localStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
     setShowTerms(false);
   };
 
   return (
     <>
-      <TermsModal isOpen={showTerms} onAccept={handleTermsAccept} onClose={() => setShowTerms(false)} />
+      <TermsModal
+        isOpen={showTerms}
+        onAccept={handleTermsAccept}
+        onClose={() => setShowTerms(false)}
+      />
+
       <RouterRoutes>
-        {/* Define your route here */}
         <Route path="/" element={<PCOSCareDashboard />} />
         <Route path="/pcos-care-dashboard" element={<PCOSCareDashboard />} />
         <Route path="/about" element={<AboutPage />} />

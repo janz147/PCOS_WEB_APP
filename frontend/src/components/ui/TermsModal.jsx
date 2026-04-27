@@ -1,8 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from '../AppIcon';
 import Button from './Button';
 
 const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
+  const [hasReachedBottom, setHasReachedBottom] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setHasReachedBottom(false);
+    }
+  }, [isOpen]);
+
+  const handleTermsScroll = (e) => {
+    if (hasReachedBottom) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 8;
+
+    if (isAtBottom) {
+      setHasReachedBottom(true);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -12,6 +31,7 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
         className="absolute inset-0 bg-background/90 backdrop-blur-sm"
         onClick={viewOnly ? onClose : undefined}
       />
+
       {/* Modal Content */}
       <div className="relative z-10 w-full max-w-2xl mx-4 animate-scaleIn">
         <div className="card-base border-2 border-primary/20">
@@ -26,21 +46,26 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
                 <Icon name="X" size={18} />
               </button>
             )}
+
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               <Icon name="FileText" size={16} />
               <span>Welcome to CystSense</span>
             </div>
+
             <h2 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">
               Terms &amp; Conditions
             </h2>
+
             <p className="text-muted-foreground text-sm">
               Please read and accept the terms and conditions before using this application.
             </p>
           </div>
 
           {/* Terms Content */}
-          <div className="bg-muted/30 rounded-xl p-5 mb-6 max-h-72 overflow-y-auto text-sm text-muted-foreground space-y-5 border border-border">
-
+          <div
+            onScroll={handleTermsScroll}
+            className="bg-muted/30 rounded-xl p-5 mb-3 max-h-72 overflow-y-auto text-sm text-muted-foreground space-y-5 border border-border"
+          >
             <div>
               <h3 className="font-semibold text-foreground mb-1">1. Introduction</h3>
               <p>
@@ -72,7 +97,9 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-xs mb-2">
                 <span className="font-semibold">⚠ Referral Advice:</span> "If you are worried about your symptoms, please consult an OB-GYN or women's health clinic."
               </div>
-              <p className="mb-2">The Application is intended for educational and awareness purposes only and is not a substitute for professional medical consultation.</p>
+              <p className="mb-2">
+                The Application is intended for educational and awareness purposes only and is not a substitute for professional medical consultation.
+              </p>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-xs mb-2">
                 <span className="font-semibold">⚠ Content Sensitivity Notice:</span> "Content Notice: The following section discusses topics related to weight, fertility, or mental health. Some users may find this content sensitive. You may stop or exit the assessment at any time."
               </div>
@@ -91,7 +118,9 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
               <h3 className="font-semibold text-foreground mb-1">3. Data Collection and Privacy</h3>
               <p className="mb-2">The Application may collect: Self-reported health information.</p>
               <p className="mb-2">All data collection shall follow applicable data protection laws.</p>
-              <p>Users understand that no system is completely secure. While reasonable safeguards are implemented, absolute security cannot be guaranteed.</p>
+              <p>
+                Users understand that no system is completely secure. While reasonable safeguards are implemented, absolute security cannot be guaranteed.
+              </p>
             </div>
 
             <div>
@@ -136,6 +165,13 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
             </div>
           </div>
 
+          {/* Tiny caption */}
+          {!viewOnly && (
+            <p className="text-[11px] text-muted-foreground text-center mb-4">
+              Please read the terms and conditions to proceed with the Web Application.
+            </p>
+          )}
+
           {/* Actions */}
           <div className="flex justify-center">
             {viewOnly ? (
@@ -155,8 +191,9 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
                 iconName="Check"
                 iconPosition="left"
                 className="px-10"
+                disabled={!hasReachedBottom}
               >
-                I Agree
+                {hasReachedBottom ? 'I Agree' : 'I Agree'}
               </Button>
             )}
           </div>

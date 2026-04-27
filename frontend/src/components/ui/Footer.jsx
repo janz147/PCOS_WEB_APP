@@ -13,8 +13,6 @@ const Footer = ({ className = '' }) => {
     { name: 'Clinics Near Me', path: '/clinics-near-me' },
     { name: 'Facts & Myths', path: '/facts-and-myths' },
     { name: 'About Us', path: '/about' },
-    { name: 'Resources', path: '/resources' },
-    { name: 'Research', path: '/research' }
   ];
 
   const socialLinks = [
