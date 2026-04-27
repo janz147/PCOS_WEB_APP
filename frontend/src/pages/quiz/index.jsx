@@ -885,6 +885,35 @@ const getStatusLabel = (status) => {
   return labels[status] || status;
 };
 
+const getProbabilityMeta = (probability) => {
+  const p = Number(probability) || 0;
+
+  if (p >= 0.75) {
+    return {
+      label: 'High Likelihood',
+      badge: 'bg-red-100 text-red-700 border-red-200',
+      accent: 'from-red-50 to-red-100',
+      text: 'The image shows a higher likelihood of PCOS-related features. This is not a diagnosis, but it suggests the result should be reviewed together with clinical findings and other test results.',
+    };
+  }
+
+  if (p >= 0.5) {
+    return {
+      label: 'Moderate Likelihood',
+      badge: 'bg-amber-100 text-amber-700 border-amber-200',
+      accent: 'from-amber-50 to-amber-100',
+      text: 'The image shows an intermediate likelihood of PCOS-related features. This result is worth discussing alongside symptoms, history, and clinical assessment.',
+    };
+  }
+
+  return {
+    label: 'Lower Likelihood',
+    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    accent: 'from-emerald-50 to-emerald-100',
+    text: 'The image shows a lower likelihood of PCOS-related features. That said, ultrasound alone does not rule out PCOS, so symptoms and clinical data still matter.',
+  };
+};
+
 const createGuidanceItem = (title, text, status = 'normal') => ({
   title,
   text,
@@ -2664,109 +2693,85 @@ const QuizPage = () => {
 
                     {/* Results Content */}
                     {results && (
-                      <div className="space-y-6 mb-6">
-                        {/* Tabular Result */}
-                        {results?.tabular && (
-                          <div className="p-5 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
-                            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                              <Icon name="Activity" size={20} />
-                              Clinical Assessment
-                            </h4>
-
-                            <div className="space-y-3">
-                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Prediction:</span>
-                                <span className="font-bold text-foreground text-lg">
-                                  {results?.tabular?.predicted_label}
-                                </span>
-                              </div> */}
-
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Probability:</span>
-                                <span className="font-bold text-foreground text-lg">
-                                  {results?.tabular?.probability_display || `${(results?.tabular?.probability * 100)?.toFixed(1)}%`}
-                                </span>
-                              </div>
-
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Assessment Type:</span>
-                                <span className={cn(
-                                  "px-4 py-1.5 rounded-full text-sm font-semibold",
-                                  results?.tabular?.completenessLevel === 'confident'
-                                    ? "bg-green-100 text-green-700"
-                                    : results?.tabular?.completenessLevel === 'preliminary'
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-gray-100 text-gray-700"
-                                )}>
-                                  {results?.tabular?.completenessLevel === 'confident'
-                                    ? 'Full Assessment'
-                                    : results?.tabular?.completenessLevel === 'preliminary'
-                                      ? 'Preliminary Assessment'
-                                      : 'Insufficient Data'}
-                                </span>
-                              </div>
-
-                              {results?.tabular?.completenessLevel !== 'confident' && (
-                                <div className={cn(
-                                  "p-4 rounded-xl border",
-                                  results?.tabular?.completenessLevel === 'preliminary'
-                                    ? "bg-yellow-50 border-yellow-200 text-yellow-800"
-                                    : "bg-gray-50 border-gray-200 text-gray-700"
-                                )}>
-                                  <p className="text-sm font-medium">
-                                    {results?.tabular?.completenessLevel === 'preliminary'
-                                      ? 'This is a preliminary result due to incomplete clinical data.'
-                                      : 'There is not enough data for a reliable clinical assessment.'}
+                      <div className="mb-6">
+                        {results?.image ? (
+                          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 shadow-sm">
+                              <div className="flex items-start justify-between gap-3 mb-4">
+                                <div>
+                                  <h4 className="font-semibold text-foreground text-lg flex items-center gap-2">
+                                    <Icon name="Image" size={20} />
+                                    Ultrasound Analysis
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    AI-assisted image review
                                   </p>
                                 </div>
-                              )}
 
-                              {results?.tabular?.completenessLevel === 'confident' && (
-                                <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                  <span className="text-sm text-muted-foreground">Risk Level:</span>
-                                  <span className={cn(
-                                    "px-4 py-1.5 rounded-full text-sm font-semibold",
-                                    results?.tabular?.probability >= 0.5
-                                      ? "bg-red-100 text-red-700"
-                                      : "bg-green-100 text-green-700"
-                                  )}>
-                                    {results?.tabular?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Image Result */}
-                        {results?.image && (
-                          <div className="p-5 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-                            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                              <Icon name="Image" size={20} />
-                              Ultrasound Analysis
-                            </h4>
-                            <div className="space-y-3">
-                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Prediction:</span>
-                                <span className="font-bold text-foreground text-lg">{results?.image?.predicted_label}</span>
-                              </div> */}
-                              <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Probability of having PCOS:</span>
-                                <span className="font-bold text-foreground text-2xl">
-                                  {results?.image?.probability_display || `${(results?.image?.probability * 100)?.toFixed(1)}%`}
+                                <span className={cn(
+                                  "px-3 py-1 rounded-full text-xs font-semibold border",
+                                  getProbabilityMeta(results?.image?.probability).badge
+                                )}>
+                                  {getProbabilityMeta(results?.image?.probability).label}
                                 </span>
                               </div>
-                              {/* <div className="flex justify-between items-center p-3 rounded-lg bg-background/50">
-                                <span className="text-sm text-muted-foreground">Risk Level:</span>
-                                <span className={cn(
-                                  "px-4 py-1.5 rounded-full text-sm font-semibold",
-                                  results?.image?.probability >= 0.5
-                                    ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                                )}>
-                                  {results?.image?.probability >= 0.5 ? 'High Risk' : 'Low Risk'}
-                                </span>
-                              </div> */}
+
+                              <div className="space-y-3">
+                                <div className="rounded-2xl overflow-hidden border border-blue-200 bg-white">
+                                  {uploadedImages?.[uploadedImages?.length - 1]?.preview ? (
+                                    <img
+                                      src={uploadedImages[uploadedImages.length - 1].preview}
+                                      alt="Uploaded ultrasound"
+                                      className="w-full h-56 object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-56 flex items-center justify-center bg-muted/40">
+                                      <div className="text-center px-4">
+                                        <Icon name="Image" size={32} className="mx-auto mb-2 text-muted-foreground" />
+                                        <p className="text-sm text-muted-foreground">
+                                          Ultrasound preview unavailable
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex justify-between items-center p-3 rounded-xl bg-background/80">
+                                  <span className="text-sm text-muted-foreground">Probability of PCOS:</span>
+                                  <span className="font-bold text-foreground text-2xl">
+                                    {results?.image?.probability_display || `${(results?.image?.probability * 100)?.toFixed(1)}%`}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
+
+                            <div className={cn(
+                              "p-5 rounded-2xl border shadow-sm bg-gradient-to-br",
+                              getProbabilityMeta(results?.image?.probability).accent
+                            )}>
+                              <h4 className="font-semibold text-foreground text-lg mb-3">
+                                What this means
+                              </h4>
+
+                              <p className="text-sm text-foreground/80 leading-7">
+                                {getProbabilityMeta(results?.image?.probability).text}
+                              </p>
+
+                              <div className="mt-5 p-4 rounded-xl bg-white/70 border border-white/60">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                                  Helpful reminder
+                                </p>
+                                <p className="text-sm text-muted-foreground leading-6">
+                                  Ultrasound results work best together with symptoms, cycle history, and laboratory data. A clinical review gives the most reliable picture.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-5 rounded-2xl bg-muted/40 border">
+                            <p className="text-sm text-muted-foreground">
+                              Results are ready.
+                            </p>
                           </div>
                         )}
                       </div>
