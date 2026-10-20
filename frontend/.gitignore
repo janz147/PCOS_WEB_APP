@@ -1,8 +1,27 @@
+# secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+
+# dependencies
+node_modules/
+
+# build output
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# editor / OS
 .DS_Store
-node_modules
-.idea
-package-lock.json
-/build
-.vscode/
 .idea/
+.vscode/
+
+# Vite temp config files
 vite.config.*s.*

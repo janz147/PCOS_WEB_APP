@@ -9,13 +9,13 @@ const WelcomeHeader = () => {
   rounded-2xl bg-primary/10 mb-4 md:mb-6 overflow-hidden">
         <img
           src={image1}
-          alt="CystSense Logo"
+          alt="OvaMetrics Logo"
           className="w-full h-full object-contain"
         />
       </div>
 
       <h1 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-foreground mb-3 md:mb-4 px-4">
-        Welcome to CystSense
+        Welcome to OvaMetrics
       </h1>
 
       <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">

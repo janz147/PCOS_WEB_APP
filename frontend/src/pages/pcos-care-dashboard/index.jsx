@@ -59,32 +59,53 @@ const INITIAL_NEWS_ARTICLES = [
   },
 ];
 
-const extractGdeltArticles = (data) => {
-  const candidates = [
-    data?.articles,
-    data?.artlist,
-    data?.result?.articles,
-    data?.results,
-    data?.response?.articles,
-  ].filter(Array.isArray);
+// Proxied to https://news.google.com by Vite (dev/preview) and nginx (production)
+const NEWS_FEED_URL =
+  '/gnews/rss/search?q=polycystic+ovary+syndrome+OR+PCOS&hl=en-PH&gl=PH&ceid=PH:en';
 
-  if (candidates.length > 0) {
-    return candidates[0];
-  }
+const unsplash = (id) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=800&q=80`;
 
-  const arrayValues = Object.values(data || {}).filter(Array.isArray);
+// Image pools. Swap any URL for your own (e.g. '/news/diet.jpg' in /public/news).
+const NEWS_IMAGES = {
+  diagnosis: [
+    unsplash('photo-1576091160550-2173dba999ef'),
+    unsplash('photo-1559757148-5c350d0d3c56'),
+  ],
+  lifestyle: [
+    unsplash('photo-1490645935967-10de6ba17061'),
+    unsplash('photo-1571019613454-1cb2f99b2d8b'),
+  ],
+  mental: [
+    'https://img.rocket.new/generatedImages/rocket_gen_img_1020f041f-1767232351970.png',
+  ],
+  research: [
+    unsplash('photo-1532938911079-1b06ac7ceec7'),
+    unsplash('photo-1505751172876-fa1923c5c528'),
+  ],
+  general: [
+    'https://img.rocket.new/generatedImages/rocket_gen_img_156e44d41-1765786683225.png',
+    'https://img.rocket.new/generatedImages/rocket_gen_img_1a127a1a8-1766483711381.png',
+  ],
+};
 
-  const likelyArticles = arrayValues.find((arr) =>
-    arr.some(
-      (item) =>
-        item &&
-        typeof item === 'object' &&
-        !Array.isArray(item) &&
-        (item.title || item.url || item.seendate || item.snippet || item.summary)
-    )
-  );
+const NEWS_IMAGE_RULES = [
+  { key: 'mental', test: /mental|anxiety|depress|stress|mood|therap/i },
+  { key: 'lifestyle', test: /diet|nutrition|food|exercise|workout|lifestyle|weight|sleep|yoga/i },
+  { key: 'diagnosis', test: /diagnos|symptom|test|ultrasound|screening|hormone/i },
+  { key: 'research', test: /study|research|trial|scientist|nature|journal|guideline/i },
+];
 
-  return likelyArticles || [];
+// Picks a themed image for the article, avoiding repeats within one batch
+const pickNewsImage = (title, used) => {
+  const matched = NEWS_IMAGE_RULES.find((r) => r.test.test(title));
+  const ordered = [
+    ...(matched ? NEWS_IMAGES[matched.key] : []),
+    ...Object.values(NEWS_IMAGES).flat(),
+  ];
+  const next = ordered.find((url) => !used.has(url)) || ordered[used.size % ordered.length];
+  used.add(next);
+  return next;
 };
 
 const PCOSCareDashboard = () => {
@@ -112,60 +133,57 @@ const PCOSCareDashboard = () => {
         setNewsLoading(true);
         setNewsError('');
 
-        // Google News RSS (FREE)
-        const rssUrl =
-          'https://news.google.com/rss/search?q=polycystic+ovary+syndrome+OR+PCOS&hl=en-PH&gl=PH&ceid=PH:en';
+        const response = await fetch(NEWS_FEED_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        // Convert RSS → JSON using free service
-        const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-          rssUrl
-        )}`;
+        const xml = await response.text();
 
-        console.log("Fetching RSS:", api);
+        // If the proxy is missing, the SPA fallback returns index.html with a 200
+        if (!xml.trimStart().startsWith('<?xml') && !xml.includes('<rss')) {
+          throw new Error('Proxy not configured: received HTML instead of RSS');
+        }
 
-        const response = await fetch(api);
-        const data = await response.json();
+        const doc = new DOMParser().parseFromString(xml, 'text/xml');
+        const items = Array.from(doc.querySelectorAll('item')).slice(0, 6);
 
-        console.log("RSS DATA:", data);
+        const usedImages = new Set();
 
-        const liveArticles = (data.items || []).slice(0, 6).map((item, index) => ({
-          id: `live-${index}`,
-          title: item.title,
-          excerpt: item.description.replace(/<[^>]+>/g, '').slice(0, 120),
-          date: item.pubDate?.slice(0, 10),
-          imageUrl:
-            item.thumbnail ||
-            'https://images.unsplash.com/photo-1576091160550-2173dba999ef',
-          imageAlt: item.title,
-          articleUrl: item.link,
-          category: 'News',
-          readTime: 'Read more',
-        }));
+        const liveArticles = items.map((item, index) => {
+          const rawTitle = item.querySelector('title')?.textContent || '';
+          const source = item.querySelector('source')?.textContent || 'News';
+          const pubDate = item.querySelector('pubDate')?.textContent;
+          const title = rawTitle.replace(/ - [^-]+$/, ''); // drop trailing " - Source"
 
-        if (!cancelled && liveArticles.length) {
-          const merged = [...INITIAL_NEWS_ARTICLES];
-
-          const seen = new Set(
-            merged.map((item) => item.title.toLowerCase())
-          );
-
-          liveArticles.forEach((item) => {
-            if (!seen.has(item.title.toLowerCase())) {
-              merged.push(item);
-              seen.add(item.title.toLowerCase());
+          let date = '';
+          if (pubDate) {
+            const parsed = new Date(pubDate);
+            if (!Number.isNaN(parsed.getTime())) {
+              date = parsed.toISOString().slice(0, 10);
             }
-          });
-
-          if (liveArticles.length > 0) {
-            setNewsArticles(liveArticles);
-          } else {
-            setNewsArticles(INITIAL_NEWS_ARTICLES);
           }
+
+          return {
+            id: `live-${index}`,
+            title,
+            excerpt: `Latest from ${source}. Click to read the full story.`,
+            date,
+            imageUrl: pickNewsImage(title, usedImages),
+            imageAlt: title,
+            articleUrl: item.querySelector('link')?.textContent || '#',
+            category: source,
+            readTime: 'Read more',
+          };
+        });
+
+        if (!cancelled) {
+          setNewsArticles(
+            liveArticles.length ? liveArticles : INITIAL_NEWS_ARTICLES
+          );
         }
       } catch (err) {
-        console.error("RSS fetch error:", err);
+        console.error('News fetch error:', err);
         if (!cancelled) {
-          setNewsError("Failed to load live news.");
+          setNewsError('Failed to load live news.');
         }
       } finally {
         if (!cancelled) setNewsLoading(false);
@@ -267,7 +285,7 @@ const PCOSCareDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>CystSense Dashboard</title>
+        <title>OvaMetrics Dashboard</title>
         <meta
           name="description"
           content="Access comprehensive PCOS support through educational resources, interactive quizzes, local clinic finder, and latest research updates. Manage your PCOS with confidence."
@@ -359,22 +377,6 @@ const PCOSCareDashboard = () => {
                 {newsError}
               </div>
             )}
-
-            {(newsLoading || newsError) && (
-              <div className="mb-4 rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 p-4 text-xs text-muted-foreground">
-                <div className="font-semibold mb-2">News Debug</div>
-                <div>Loading: {String(newsLoading)}</div>
-                <div>Error: {newsError || 'none'}</div>
-                <div>Articles shown: {newsArticles.length}</div>
-              </div>
-            )}
-
-            {/* <details className="mb-4 rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-xs text-muted-foreground">
-              <summary className="cursor-pointer font-semibold">Show debug JSON</summary>
-              <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words">
-                {JSON.stringify(newsArticles, null, 2)}
-              </pre>
-            </details> */}
 
             <NewsGrid articles={newsArticles} />
           </section>

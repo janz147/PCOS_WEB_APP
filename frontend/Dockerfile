@@ -1,3 +1,4 @@
+# Dockerfile for building and serving a React app with Vite and Nginx
 # Build React app
 FROM node:18 AS build
 

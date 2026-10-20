@@ -55,7 +55,7 @@ const Sidebar = ({ className = '', isOpen = false }) => {
         <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary/10 mb-4 md:mb-6 overflow-hidden">
           <img
             src={image1}
-            alt="CystSense Logo"
+            alt="OvaMetrics Logo"
             className="w-full h-full object-contain"
           />
         </div>

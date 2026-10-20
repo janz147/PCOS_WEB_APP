@@ -141,7 +141,7 @@ const ClinicsNearMe = () => {
   return (
     <>
       <Helmet>
-        <title>Clinics | CystSense</title>
+        <title>Clinics | OvaMetrics</title>
         <meta
           name="description"
           content="Find OB-GYN clinics and healthcare providers in the Daraga and Legazpi area for PCOS consultations and women's health services."

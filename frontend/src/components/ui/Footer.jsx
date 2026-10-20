@@ -74,7 +74,7 @@ const Footer = ({ className = '' }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Icon name="Mail" size={18} className="flex-shrink-0" />
-                  <p className="text-sm">support@cystsense.com</p>
+                  <p className="text-sm">support@OvaMetrics.com</p>
                 </div>
               </div>
             </div>
@@ -104,7 +104,7 @@ const Footer = ({ className = '' }) => {
           {/* Copyright */}
           <div className="mt-8 pt-8 border-t border-white/20 text-center">
             <p className="text-sm text-gray-700">
-              © {new Date()?.getFullYear()} CystSense. All rights reserved.
+              © {new Date()?.getFullYear()} OvaMetrics. All rights reserved.
             </p>
             
           </div>

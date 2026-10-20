@@ -1,15 +1,59 @@
+// src/components/ui/TermsModal.jsx
+
 import React, { useEffect, useState } from 'react';
 import Icon from '../AppIcon';
 import Button from './Button';
 
+const HIDE_KEY = 'terms_hidden_on';
+
+// Local date (not UTC) so "today" matches the user's own calendar day
+const getTodayString = () => {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
+
+export const isTermsHiddenToday = () => {
+  try {
+    return localStorage.getItem(HIDE_KEY) === getTodayString();
+  } catch {
+    return false; // storage blocked (e.g. private mode): just show the terms
+  }
+};
+
+const hideTermsForToday = () => {
+  try {
+    localStorage.setItem(HIDE_KEY, getTodayString());
+  } catch {
+    /* ignore */
+  }
+};
+
 const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
   const [hasReachedBottom, setHasReachedBottom] = useState(false);
+  const [dontShowToday, setDontShowToday] = useState(false);
+
+  // Only auto-skip in normal mode, never when the user opens it via "view terms"
+  const skipToday = isOpen && !viewOnly && isTermsHiddenToday();
 
   useEffect(() => {
     if (isOpen) {
       setHasReachedBottom(false);
+      setDontShowToday(false);
     }
   }, [isOpen]);
+
+  // If the user already agreed today and ticked the box, accept silently
+  useEffect(() => {
+    if (skipToday) onAccept?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipToday]);
+
+  const handleAccept = () => {
+    if (dontShowToday) hideTermsForToday();
+    onAccept?.();
+  };
 
   const handleTermsScroll = (e) => {
     if (hasReachedBottom) return;
@@ -22,7 +66,7 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || skipToday) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center animate-fadeIn">
@@ -49,7 +93,7 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               <Icon name="FileText" size={16} />
-              <span>Welcome to CystSense</span>
+              <span>Welcome to OvaMetrics</span>
             </div>
 
             <h2 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">
@@ -172,6 +216,19 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
             </p>
           )}
 
+          {/* Do not show again today */}
+          {!viewOnly && (
+            <label className="flex items-center justify-center gap-2 mb-4 text-sm text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={dontShowToday}
+                onChange={(e) => setDontShowToday(e.target.checked)}
+                className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+              />
+              Do not show this again today
+            </label>
+          )}
+
           {/* Actions */}
           <div className="flex justify-center">
             {viewOnly ? (
@@ -187,13 +244,13 @@ const TermsModal = ({ isOpen, onAccept, onClose, viewOnly = false }) => {
             ) : (
               <Button
                 variant="default"
-                onClick={onAccept}
+                onClick={handleAccept}
                 iconName="Check"
                 iconPosition="left"
                 className="px-10"
                 disabled={!hasReachedBottom}
               >
-                {hasReachedBottom ? 'I Agree' : 'I Agree'}
+                I Agree
               </Button>
             )}
           </div>

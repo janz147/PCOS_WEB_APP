@@ -121,10 +121,10 @@ const AboutPage = () => {
   return (
     <>
       <Helmet>
-        <title>About CystSense App - Our Story & Team</title>
+        <title>About OvaMetrics App - Our Story & Team</title>
         <meta
           name="description"
-          content="Learn about CystSense App's mission to empower women with PCOS through comprehensive health management, education, and support. Meet our dedicated team of healthcare professionals."
+          content="Learn about OvaMetrics App's mission to empower women with PCOS through comprehensive health management, education, and support. Meet our dedicated team of healthcare professionals."
         />
       </Helmet>
 
@@ -152,7 +152,7 @@ const AboutPage = () => {
               />
             </div>
             <h1 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-foreground mb-3 md:mb-4 px-4">
-              About CystSense App
+              About OvaMetrics App
             </h1>
             <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
               Understanding PCOS, Empowering Your Health Journey
@@ -284,7 +284,7 @@ const AboutPage = () => {
                 Meet the Researchers
               </h2>
               <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
-                The team behind the development of the CystSense application and research study.
+                The team behind the development of the OvaMetrics application and research study.
               </p>
             </div>
 
@@ -347,7 +347,7 @@ const AboutPage = () => {
                 Rate Your Experience
               </h2>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-6">
-                Help us improve the CystSense application by sharing your feedback. Your ratings and comments are valuable to our research.
+                Help us improve the OvaMetrics application by sharing your feedback. Your ratings and comments are valuable to our research.
               </p>
               <button
                 onClick={() => setShowRatingSurvey(true)}
